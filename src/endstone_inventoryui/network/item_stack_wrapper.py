@@ -66,7 +66,11 @@ class ItemStackWrapper:
 
         stream.write_bool(has_net_id)
         if has_net_id:
-            stream.write_unsigned_varint(0)
+            # Protocol 2169 (BDS 1.26.40) projects ItemStackNetIdVariant to a
+            # single zigzag VarInt in inventory descriptors.  Older versions
+            # wrote a cereal variant discriminator before the ID; leaving that
+            # byte in the payload shifts every following field and makes the
+            # Bedrock client disconnect for a malformed inventory packet.
             stream.write_varint(self.stack_id)
 
         stream.write_unsigned_varint(0)  # BlockRuntimeID

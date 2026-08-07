@@ -3,11 +3,8 @@ from bedrock_protocol.packets.enums import ItemStackRequestActionType
 from bedrock_protocol.packets.packet import (
     ContainerClosePacket,
     ItemRegistryPacket,
-    ItemStackRequestPacket,
-    ItemStackResponsePacket,
     NetworkStackLatencyPacket,
 )
-from bedrock_protocol.packets.types.item_stack_response import ItemStackResponse
 from endstone.event import event_handler, EventPriority, PlayerQuitEvent, PacketReceiveEvent, PacketSendEvent
 from endstone.inventory import ItemStack
 from endstone.plugin import Plugin
@@ -17,6 +14,11 @@ from .manager.container.item_stack_response_builder import ItemStackResponseBuil
 from .manager.player_manager import find_session, close_session
 from .menu.menu_transaction import MenuTransaction
 from .network.container_ui_ids import ContainerUIIds
+from .network.item_stack_request_packet import (
+    ItemStackRequestPacket,
+    UnsupportedItemStackRequestAction,
+)
+from .network.item_stack_response_packet import ItemStackResponse, ItemStackResponsePacket
 from .util.item_utils import all_item_data, add_item_data
 
 
@@ -159,32 +161,32 @@ class EventListener:
 
         pk = NetworkStackLatencyPacket()
         pk.deserialize(payload)
-        self._plugin.logger.info(f"[UI DEBUG] _handle_ping: state={session.state}, pk.timestamp={pk.timestamp}, session.ack_timestamp={session.ack_timestamp}")
-        
-        # Check if the timestamps match
-        if session.ack_timestamp != pk.timestamp:
-            # Fallback check: if BDS did not apply a factor, check raw match
-            if session.ack_timestamp // 1_000_000 == pk.timestamp:
-                self._plugin.logger.info("[UI DEBUG] _handle_ping: matched raw timestamp fallback (BDS microsecond divisor matched).")
-            else:
-                self._plugin.logger.info(f"[UI DEBUG] _handle_ping: timestamp mismatch! expected {session.ack_timestamp}, got {pk.timestamp}")
-                return
+        if not self._timestamps_match(session.ack_timestamp, pk.timestamp):
+            return
 
         match session.state:
             case Session.State.GRAPHIC_SENT:
-                self._plugin.logger.info("[UI DEBUG] GRAPHIC_SENT -> GRAPHIC_RECEIVED")
                 session.update_state(Session.State.GRAPHIC_RECEIVED)
             case Session.State.GRAPHIC_DATA_SENT:
-                self._plugin.logger.info("[UI DEBUG] GRAPHIC_DATA_SENT -> GRAPHIC_DATA_RECEIVED")
                 session.update_state(Session.State.GRAPHIC_DATA_RECEIVED)
             case Session.State.OPENING:
-                self._plugin.logger.info(f"[UI DEBUG] OPENING (attempts: {session.open_attempts})")
                 if session.open_attempts >= Session.MAX_OPEN_ATTEMPTS:
-                    self._plugin.logger.info("[UI DEBUG] Max open attempts reached. Closing session.")
                     session.close()
                     return
                 session.open_attempts += 1
                 session.open()
+
+    @staticmethod
+    def _timestamps_match(expected: int, received: int) -> bool:
+        """Match the raw or scaled latency timestamp without fuzzy accepts."""
+        if expected <= 0 or received <= 0:
+            return False
+        if expected == received:
+            return True
+        return any(
+            expected == received * scale or received == expected * scale
+            for scale in (1_000, 1_000_000)
+        )
 
     def _handle_container_close(self, player, payload: bytes) -> None:
         session = find_session(player)
@@ -193,7 +195,6 @@ class EventListener:
 
         pk = ContainerClosePacket()
         pk.deserialize(payload)
-        self._plugin.logger.info(f"[UI DEBUG] _handle_container_close: container_id={pk.container_id}")
         if pk.container_id != Session.CONTAINER_ID:
             return
 
@@ -211,7 +212,6 @@ class EventListener:
 
     def _handle_packet_violation_warning(self, player) -> None:
         session = find_session(player)
-        self._plugin.logger.info(f"[UI DEBUG] _handle_packet_violation_warning: session={session}, state={session.state if session else 'None'}")
         if session is None or session.state != Session.State.OPENING:
             return
 
@@ -225,7 +225,27 @@ class EventListener:
             return False
 
         pk = ItemStackRequestPacket()
-        pk.deserialize(payload)
+        try:
+            pk.deserialize(payload)
+        except UnsupportedItemStackRequestAction as error:
+            self._plugin.logger.debug(str(error))
+            self._reject_item_stack_request(
+                player,
+                session,
+                [],
+                error.request_id,
+            )
+            return True
+        except Exception as error:
+            # Never pass a partially decoded virtual-container request into
+            # BDS. Close the fake container cleanly instead of risking a bad
+            # packet disconnect or corrupting the player's inventory state.
+            self._plugin.logger.warning(
+                f"Closing InventoryUI session after invalid item stack request: {error}"
+            )
+            session.close(sync_inventory=True)
+            close_session(player)
+            return True
         self._handle_item_stack_request(player, session, session.menu, pk)
         return True
 
@@ -243,7 +263,6 @@ class EventListener:
             case MinecraftPacketIds.PacketViolationWarning:
                 self._handle_packet_violation_warning(player)
             case MinecraftPacketIds.ItemStackRequest:
-                self._plugin.logger.info("[UI DEBUG] Intercepted ItemStackRequest packet.")
                 if self._handle_item_stack_request_packet(player, event.payload):
                     event.cancel()
 

@@ -56,20 +56,19 @@ InventoryUI is a developer API and intentionally registers no player commands. O
 | Endstone API | `0.11` |
 | Bedrock Dedicated Server | `1.26.40` |
 | Python | `>=3.10` |
-| Plugin release | `v2.0.4` |
+| Plugin release | `v2.0.5` |
 
 ## Install
 
-Download the wheel from the matching GitHub release:
-
-```bash
-gh release download v2.0.4 --repo TheNINJALLO/endstone-inventoryui --pattern "*.whl"
-```
+Download [the `v2.0.5` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.5/endstone_inventoryui-2.0.5-py3-none-any.whl).
 
 Copy the downloaded wheel into the server's `plugins/` directory, remove any older wheel for the same plugin, and restart Endstone.
 
 > [!IMPORTANT]
 > Use Endstone `0.11.8` with BDS `1.26.40`. Back up worlds and plugin data before upgrading a production server.
+
+> [!NOTE]
+> `v2.0.5` implements the protocol 2169 inventory layout used by BDS `1.26.40`. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
 
 ## Configuration and secrets
 

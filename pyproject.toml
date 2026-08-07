@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "endstone-inventoryui"
-version = "2.0.4"
+version = "2.0.5"
 dependencies = [
     "endstone>=0.11.8,<0.12",
     "bedrock-protocol-packets-ng==0.0.9"
@@ -19,7 +19,7 @@ license = { file = "LICENSE" }
 keywords = ["endstone", "plugin"]
 
 [project.urls]
-Homepage = "https://github.com/Shock95/endstone-inventoryui"
+Homepage = "https://github.com/TheNINJALLO/endstone-inventoryui"
 
 [project.entry-points."endstone"]
 inventoryui = "endstone_inventoryui:InventoryUIPlugin"
