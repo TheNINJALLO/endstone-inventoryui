@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "endstone-inventoryui-example"
+version = "1.1.1"
+dependencies = ["endstone>=0.11.8,<0.12", "endstone-inventoryui"]
+authors = [
+    { name = "Shock95", email = "" },
+]
+description = "Example plugin for endstone-inventoryui"
+requires-python = ">=3.10"
+
+[project.entry-points."endstone"]
+inventoryui_example = "endstone_inventoryui_example:Main"
