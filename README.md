@@ -20,8 +20,9 @@
 </p>
 
 <p align="center">
-  <a href="#overview">Overview</a> &bull;
-  <a href="#compatibility">Compatibility</a> &bull;
+  <a href="#what-it-does">What it does</a> &bull;
+  <a href="#how-to-use">How to use</a> &bull;
+  <a href="#commands-and-permissions">Commands</a> &bull;
   <a href="#install">Install</a> &bull;
   <a href="https://github.com/TheNINJALLO/endstone-inventoryui/releases">Releases</a>
 </p>
@@ -30,9 +31,22 @@
 
 Inventory UI plugin for Endstone servers. This release is aligned with Endstone 0.11.8 and Minecraft Bedrock Dedicated Server 1.26.40, and is distributed as a Python wheel for direct installation in an Endstone server.
 
-## Capabilities
+## What it does
 
--
+- Provides a reusable chest, double-chest, dispenser, and hopper menu API for other Endstone plugins.
+- Translates Bedrock inventory packets into safe `MenuTransaction` callbacks.
+- Supports click, open, close, queueing, proceed, and discard behavior for custom interfaces.
+
+## How to use
+
+1. Install the wheel as a dependency on every server that runs an InventoryUI-based plugin.
+2. From plugin code, create a `Menu`, populate `menu.inventory`, and attach a transaction listener.
+3. Call `menu.send_to(player)` to open it and return `proceed()` or `discard()` from each click handler.
+4. Use the included `example/` project as the reference implementation.
+
+## Commands and permissions
+
+InventoryUI is a developer API and intentionally registers no player commands. Other plugins import `Menu`, `MenuType`, and `MenuTransaction` and decide how their menus are opened.
 
 ## Compatibility
 
