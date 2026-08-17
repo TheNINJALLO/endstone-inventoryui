@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img alt="Endstone 0.11.8" src="https://img.shields.io/badge/Endstone-0.11.8-52b7a8?style=flat-square">
+  <img alt="Endstone 0.11.9" src="https://img.shields.io/badge/Endstone-0.11.9-52b7a8?style=flat-square">
   <img alt="API 0.11" src="https://img.shields.io/badge/API-0.11-63b8ff?style=flat-square">
-  <img alt="BDS 1.26.40" src="https://img.shields.io/badge/BDS-1.26.40-8b7dff?style=flat-square">
+  <img alt="BDS 1.26.44" src="https://img.shields.io/badge/BDS-1.26.44-8b7dff?style=flat-square">
   <img alt="Python >=3.10" src="https://img.shields.io/badge/Python-%3E=3.10-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white">
 </p>
 
@@ -29,7 +29,7 @@
 
 ## Overview
 
-Inventory UI plugin for Endstone servers. This release is aligned with Endstone 0.11.8 and Minecraft Bedrock Dedicated Server 1.26.40, and is distributed as a Python wheel for direct installation in an Endstone server.
+Inventory UI plugin for Endstone servers. This release is aligned with Endstone 0.11.9 and Minecraft Bedrock Dedicated Server 1.26.44, and is distributed as a Python wheel for direct installation in an Endstone server.
 
 ## What it does
 
@@ -52,23 +52,23 @@ InventoryUI is a developer API and intentionally registers no player commands. O
 
 | Component | Supported version |
 |---|---|
-| Endstone | `0.11.8` |
+| Endstone | `0.11.9` |
 | Endstone API | `0.11` |
-| Bedrock Dedicated Server | `1.26.40` |
+| Bedrock Dedicated Server | `1.26.44` |
 | Python | `>=3.10` |
-| Plugin release | `v2.0.5` |
+| Plugin release | `v2.0.6` |
 
 ## Install
 
-Download [the `v2.0.5` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.5/endstone_inventoryui-2.0.5-py3-none-any.whl).
+Download [the `v2.0.6` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.6/endstone_inventoryui-2.0.6-py3-none-any.whl).
 
 Copy the downloaded wheel into the server's `plugins/` directory, remove any older wheel for the same plugin, and restart Endstone.
 
 > [!IMPORTANT]
-> Use Endstone `0.11.8` with BDS `1.26.40`. Back up worlds and plugin data before upgrading a production server.
+> Use Endstone `0.11.9` with BDS `1.26.44`. Back up worlds and plugin data before upgrading a production server.
 
 > [!NOTE]
-> `v2.0.5` implements the protocol 2169 inventory layout used by BDS `1.26.40`. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
+> `v2.0.6` keeps the inventory layout introduced for BDS `1.26.40`; Endstone 0.11.9 confirms BDS `1.26.44` did not change the network protocol. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
 
 ## Configuration and secrets
 

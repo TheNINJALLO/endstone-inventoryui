@@ -66,7 +66,7 @@ class ItemStackWrapper:
 
         stream.write_bool(has_net_id)
         if has_net_id:
-            # Protocol 2169 (BDS 1.26.40) projects ItemStackNetIdVariant to a
+            # Protocol 2169 (BDS 1.26.44) projects ItemStackNetIdVariant to a
             # single zigzag VarInt in inventory descriptors.  Older versions
             # wrote a cereal variant discriminator before the ID; leaving that
             # byte in the payload shifts every following field and makes the

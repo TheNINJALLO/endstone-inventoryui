@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "endstone-inventoryui"
-version = "2.0.5"
+version = "2.0.6"
 dependencies = [
-    "endstone>=0.11.8,<0.12",
+    "endstone>=0.11.9,<0.12",
     "bedrock-protocol-packets-ng==0.0.9"
 ]
 authors = [

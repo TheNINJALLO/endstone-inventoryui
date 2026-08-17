@@ -1,7 +1,7 @@
 """Protocol 2169 ItemStackRequest decoder.
 
 The upstream ``bedrock-protocol-packets-ng`` 0.0.9 decoder targets the
-pre-1.26.40 request layout.  BDS 1.26.40 moved request slot network IDs to a
+pre-1.26.44 request layout.  BDS 1.26.44 moved request slot network IDs to a
 tagged cereal variant, so InventoryUI owns this small decoder until the shared
 packet package exposes the new layout.
 """
