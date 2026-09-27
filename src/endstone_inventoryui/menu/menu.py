@@ -80,6 +80,7 @@ class Menu:
         existing_session = find_session(player)
         if existing_session is not None:
             existing_session.pending.append(self)
+            existing_session.close()
         else:
             session = create_session(player)
             session.menu = self
@@ -105,7 +106,7 @@ class Menu:
         Close this menu for all players currently viewing it.
         """
         from endstone_inventoryui.manager import Session
-        for s in self._sessions:
+        for s in list(self._sessions):
             if s.state != Session.State.CLOSING:
                 s.close()
 

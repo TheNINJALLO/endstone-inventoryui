@@ -94,7 +94,7 @@ def test_item_stack_response_writes_protocol_2169_optionals():
     assert stream.get_left_buffer() == b""
 
 
-def test_item_stack_request_reads_tagged_network_id_variants():
+def test_item_stack_request_reads_cereal_fixed_width_network_ids():
     stream = BinaryStream()
     stream.write_unsigned_varint(1)  # Requests
     stream.write_varint(-1)
@@ -104,13 +104,11 @@ def test_item_stack_request_reads_tagged_network_id_variants():
 
     FullContainerName(21).write(stream)
     stream.write_byte(4)
-    stream.write_unsigned_varint(0)  # Server network ID alternative
-    stream.write_varint(42)
+    stream.write_signed_int(42)
 
     FullContainerName(12).write(stream)
     stream.write_byte(7)
-    stream.write_unsigned_varint(0)
-    stream.write_varint(84)
+    stream.write_signed_int(84)
 
     stream.write_unsigned_varint(0)  # Strings to filter
     stream.write_signed_int(0)

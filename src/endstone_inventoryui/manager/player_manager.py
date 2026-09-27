@@ -25,10 +25,12 @@ def create_session(player: Player) -> 'Session':
     return session
 
 
-def close_session(player: Player):
+def close_session(player: Player, *, send_close: bool = True):
     global sessions
     if player.unique_id in sessions:
-        session = sessions[player.unique_id]
-        if session.menu is not None:
-            session.menu._remove_session(session)
-        del sessions[player.unique_id]
+        session = sessions.pop(player.unique_id)
+        try:
+            session.close(send_close=send_close)
+        finally:
+            if session.menu is not None:
+                session.menu._remove_session(session)

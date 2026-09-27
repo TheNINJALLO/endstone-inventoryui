@@ -2,6 +2,7 @@ name: Build wheel and publish release
 
 on:
   push:
+    branches: [main]
     tags:
       - "v*"
   workflow_dispatch:
@@ -10,6 +11,23 @@ permissions:
   contents: write
 
 jobs:
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.0"
+          cache-dependency-path: tests/live/client/go.sum
+      - name: Build pinned acceptance client
+        working-directory: tests/live/client
+        run: |
+          go build -o bedrock-inventory-client .
+          GOOS=windows GOARCH=amd64 go build -o bedrock-inventory-client.exe .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-client
+          path: tests/live/client/bedrock-inventory-client*
   build-wheel:
     runs-on: ubuntu-latest
     defaults:

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from bedrock_protocol.packets.packet import BlockActorDataPacket, ContainerOpenPacket
 from bedrock_protocol.packets.types import BlockPos
 from endstone import Player
-from rapidnbt import CompoundTag
+from rapidnbt import CompoundTag, ByteTag
 
 if TYPE_CHECKING:
     from endstone_inventoryui.menu.menu import Menu
@@ -29,10 +29,17 @@ class BlockPairGraphic(Graphic):
             send_block(player, self.menu.type.block_id, p)
 
     def send_data(self, player: Player):
-        for p in self.pos:
+        for index, p in enumerate(self.pos):
             tag = CompoundTag()
             tag.set("id", self.menu.type.block_actor_id)
             tag.set("CustomName", self.menu.name)
+            partner = self.pos[1 - index]
+            tag.set("x", p.x)
+            tag.set("y", p.y)
+            tag.set("z", p.z)
+            tag.set("pairx", partner.x)
+            tag.set("pairz", partner.z)
+            tag.set("pairlead", ByteTag(1 if index == 0 else 0))
             pk = BlockActorDataPacket(BlockPos(p.x, p.y, p.z), tag)
             player.send_packet(pk.get_packet_id(), pk.serialize())
 

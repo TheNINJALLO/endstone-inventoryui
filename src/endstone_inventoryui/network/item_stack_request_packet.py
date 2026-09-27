@@ -1,10 +1,4 @@
-"""Protocol 2169 ItemStackRequest decoder.
-
-The upstream ``bedrock-protocol-packets-ng`` 0.0.9 decoder targets the
-pre-1.26.44 request layout.  BDS 1.26.44 moved request slot network IDs to a
-tagged cereal variant, so InventoryUI owns this small decoder until the shared
-packet package exposes the new layout.
-"""
+"""Bedrock cereal ItemStackRequest decoder (BDS 1.26.51, protocol 2193)."""
 
 from dataclasses import dataclass, field
 
@@ -35,20 +29,16 @@ class ItemStackRequestSlotInfo:
         container.read(stream)
         slot = stream.get_byte()
 
-        # Protocol 2169 uses cereal's tagged variant here.  The variant index
-        # distinguishes server, client-request, and legacy-client-request IDs;
-        # all three alternatives carry a compressed signed 32-bit ID.
-        net_id_variant = stream.get_unsigned_varint()
-        if net_id_variant > 2:
-            raise ValueError(f"Invalid item stack net ID variant: {net_id_variant}")
-        net_id = stream.get_varint()
+        # Cereal SlotInfoData projects the variant to one little-endian int32.
+        # Unlike an inventory descriptor, this field is NOT a signed varint.
+        net_id = stream.get_signed_int()
+        net_id_variant = 0 if net_id >= 0 else (1 if net_id % 2 else 2)
         return cls(container, slot, net_id, net_id_variant)
 
     def write(self, stream: BinaryStream) -> None:
         self.container.write(stream)
         stream.write_byte(self.slot)
-        stream.write_unsigned_varint(self.net_id_variant)
-        stream.write_varint(self.net_id)
+        stream.write_signed_int(self.net_id)
 
 
 @dataclass
@@ -177,3 +167,5 @@ class ItemStackRequestPacket(Packet):
             ItemStackRequestData.read_from(stream)
             for _ in range(request_count)
         ])
+        if stream.get_left_buffer():
+            raise ValueError("Trailing data in item stack request")

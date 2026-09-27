@@ -85,7 +85,6 @@ class EventListener:
     ) -> None:
         session.container_manager.discard_transaction()
         responses.append(ItemStackResponseBuilder.build_error(client_request_id))
-        self._send_item_stack_responses(player, responses)
 
     def _apply_menu_action(
         self,
@@ -100,8 +99,11 @@ class EventListener:
     ) -> bool:
         transaction = self._create_menu_transaction(player, menu, session, action, source, destination)
         if not self._handle_menu_transaction(menu, transaction):
-            self._reject_item_stack_request(player, session, responses, client_request_id)
             return False
+        if self._is_virtual_slot(source) and self._is_virtual_slot(destination) and source.slot != destination.slot:
+            other = self._create_menu_transaction(player, menu, session, action, destination, source)
+            if not self._handle_menu_transaction(menu, other):
+                return False
         return True
 
     def _handle_item_stack_request(self, player, session, menu, pk: ItemStackRequestPacket) -> None:
@@ -118,7 +120,7 @@ class EventListener:
                                         player, session, menu, action, source, source,
                                         responses, req_data.client_request_id,
                                 ):
-                                    return
+                                    raise ValueError("Menu rejected drop")
                             session.container_manager.handle_drop(
                                 source,
                                 action.action_data.amount,
@@ -130,7 +132,7 @@ class EventListener:
                                 player, session, menu, action, source, destination,
                                 responses, req_data.client_request_id,
                             ):
-                                return
+                                raise ValueError("Menu rejected swap")
                             session.container_manager.handle_swap(source, destination)
                         case ItemStackRequestActionType.Take | ItemStackRequestActionType.Place:
                             source = action.action_data.source
@@ -139,7 +141,7 @@ class EventListener:
                                 player, session, menu, action, source, destination,
                                 responses, req_data.client_request_id,
                             ):
-                                return
+                                raise ValueError("Menu rejected transfer")
                             session.container_manager.transfer_items(
                                 source, destination, action.action_data.amount,
                             )
@@ -150,7 +152,6 @@ class EventListener:
             except Exception as error:
                 self._plugin.logger.debug(f"Error handling item stack request: {error}")
                 self._reject_item_stack_request(player, session, responses, req_data.client_request_id)
-                return
 
         self._send_item_stack_responses(player, responses)
 
@@ -170,11 +171,11 @@ class EventListener:
             case Session.State.GRAPHIC_DATA_SENT:
                 session.update_state(Session.State.GRAPHIC_DATA_RECEIVED)
             case Session.State.OPENING:
-                if session.open_attempts >= Session.MAX_OPEN_ATTEMPTS:
-                    session.close()
-                    return
-                session.open_attempts += 1
-                session.open()
+                # This reply follows ContainerOpen in the ordered stream.
+                # Current clients need not emit PacketViolationWarning.
+                session.update_state(Session.State.OPEN)
+                if session.menu._open_listener is not None:
+                    session.menu._open_listener(player)
 
     @staticmethod
     def _timestamps_match(expected: int, received: int) -> bool:
@@ -198,26 +199,22 @@ class EventListener:
         if pk.container_id != Session.CONTAINER_ID:
             return
 
-        if session.menu._close_listener is not None:
-            session.menu._close_listener(player)
-
         if session.pending:
             if session.state != Session.State.CLOSING:
-                session.close()
+                session.close(send_close=False)
             session.menu = session.pending.popleft()
             session.send_menu()
         else:
-            session.close(sync_inventory=True)
-            close_session(player)
+            close_session(player, send_close=False)
 
     def _handle_packet_violation_warning(self, player) -> None:
         session = find_session(player)
         if session is None or session.state != Session.State.OPENING:
             return
 
-        session.update_state(Session.State.OPEN)
-        if session.menu._open_listener is not None:
-            session.menu._open_listener(player)
+        # A warning is not proof that the client opened this menu. Only the
+        # matching latency acknowledgement may advance the opening state.
+        self._plugin.logger.debug("Client reported a packet violation while opening InventoryUI")
 
     def _handle_item_stack_request_packet(self, player, payload: bytes) -> bool:
         session = find_session(player)
@@ -229,12 +226,14 @@ class EventListener:
             pk.deserialize(payload)
         except UnsupportedItemStackRequestAction as error:
             self._plugin.logger.debug(str(error))
+            responses = []
             self._reject_item_stack_request(
                 player,
                 session,
-                [],
+                responses,
                 error.request_id,
             )
+            self._send_item_stack_responses(player, responses)
             return True
         except Exception as error:
             # Never pass a partially decoded virtual-container request into

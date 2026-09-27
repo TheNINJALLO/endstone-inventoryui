@@ -1,7 +1,9 @@
 from collections import deque
 from enum import Enum
 from typing import TYPE_CHECKING
+import time
 
+from bedrock_protocol.packets.packet import ContainerClosePacket
 from bedrock_protocol.packets.types import BlockPos
 from endstone import Player
 
@@ -43,6 +45,8 @@ class Session:
         self.open_attempts = 0
         self.ack_timestamp = 0
         self.pending: deque['Menu'] = deque()
+        self.last_progress = time.monotonic()
+        self._closed = False
 
     @property
     def menu(self) -> 'Menu | None':
@@ -58,6 +62,8 @@ class Session:
             self.container_manager: ContainerManager = ContainerManager(self.player, value.inventory)
 
     def send_menu(self):
+        self._closed = False
+        self.last_progress = time.monotonic()
         self.open_attempts = 0
         self.ack_timestamp = 0
         pos = get_block_behind(self.player, 2)
@@ -94,20 +100,32 @@ class Session:
         pk = InventorySlotPacket(self.CONTAINER_ID, slot=slot, item=ItemStackWrapper(stack_id, item))
         self.player.send_packet(pk.get_packet_id(), pk.serialize())
 
-    def close(self, sync_inventory: bool = False):
+    def close(self, sync_inventory: bool = True, *, send_close: bool = True):
+        if self._closed:
+            return
+        self._closed = True
         self.state = self.State.CLOSING
+        self.last_progress = time.monotonic()
+        if send_close and self.menu is not None:
+            pk = ContainerClosePacket(self.CONTAINER_ID, self.menu.type.container_type, True)
+            self.player.send_packet(pk.get_packet_id(), pk.serialize())
         if self.graphic is not None:
             self.graphic.remove(self.player)
         if self.container_manager is not None:
             cursor_item = self.container_manager.cursor_container.get(0)
             if cursor_item is not None:
-                self.player.inventory.add_item(cursor_item)
+                leftovers = self.player.inventory.add_item(cursor_item)
+                for item in leftovers.values():
+                    self.player.dimension.drop_item(self.player.location, item)
                 self.container_manager.cursor_container.set(0, None)
             # fix stack id desync between client and BDS
             if sync_inventory:
                 self.container_manager.sync_player_inventory()
+        if self.menu is not None and self.menu._close_listener is not None:
+            self.menu._close_listener(self.player)
 
     def update_state(self, state: State):
+        self.last_progress = time.monotonic()
         self.state = state
         match state:
             case self.State.GRAPHIC_RECEIVED:
@@ -116,6 +134,3 @@ class Session:
                 self.open()
             case self.State.OPEN:
                 self.send_contents()
-
-    def __del__(self):
-        self.close()

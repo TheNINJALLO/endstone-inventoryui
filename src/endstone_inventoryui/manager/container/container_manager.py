@@ -26,6 +26,7 @@ class ContainerManager:
         self.cursor_container = TransactionContainer(CursorAdapter())
         self._response_builder: ItemStackResponseBuilder | None = None
         self._modified_player_slots: set[int] = set()
+        self._pending_drops = []
 
     def begin_request(self, request_id: int) -> None:
         self._response_builder = ItemStackResponseBuilder(request_id, self.tracker, self)
@@ -112,6 +113,8 @@ class ContainerManager:
             raise ValueError("cannot stack items")
 
         merged = clone_item(existing_item)
+        if merged.amount + item.amount > min(merged.max_stack_size, item.max_stack_size):
+            raise ValueError("transfer exceeds the destination stack limit")
         merged.amount += item.amount
 
         container.set(slot, merged)
@@ -135,7 +138,7 @@ class ContainerManager:
         if dropped.amount > dropped.max_stack_size:
             raise ValueError("cannot drop item stack larger than max stack size")
 
-        self.player.dimension.drop_item(self.player.location, dropped)
+        self._pending_drops.append(dropped)
 
     def commit_transaction(self) -> ItemStackResponse:
         self.player_container.commit()
@@ -151,6 +154,9 @@ class ContainerManager:
                 self.tracker.assign_slot(container_enum, slot, item)
 
         response = self._response_builder.build()
+        for item in self._pending_drops:
+            self.player.dimension.drop_item(self.player.location, item)
+        self._pending_drops.clear()
         self._response_builder = None
         return response
 
@@ -158,6 +164,7 @@ class ContainerManager:
         self.player_container.discard()
         self.virtual_container.discard()
         self.cursor_container.discard()
+        self._pending_drops.clear()
         self._response_builder = None
 
     def sync_player_inventory(self) -> None:
