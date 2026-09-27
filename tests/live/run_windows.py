@@ -1,11 +1,13 @@
 """Real BDS / InventoryUI / Backpacks acceptance test in a disposable directory."""
 from pathlib import Path
-import argparse, json, os, shutil, sqlite3, subprocess, sys, threading, time
+import argparse, hashlib, json, os, shutil, sqlite3, subprocess, sys, threading, time
+from zipfile import ZipFile
 from endstone.cli.windows import WindowsBootstrap, PopenWithDll
 p=argparse.ArgumentParser()
 p.add_argument("--workspace",type=Path,required=True)
 p.add_argument("--run",required=True)
 p.add_argument("--vault",action="store_true")
+p.add_argument("--wheel-dir",type=Path)
 a=p.parse_args(); ws=a.workspace.resolve(); root=ws/"endstone-inventoryui-main"; out=root/"scratch"/a.run
 out.mkdir(exist_ok=False); server=out/"server"; server.mkdir(); probe=out/"python"; probe.mkdir()
 source=ws/"endstone-paradox/scratch/servers/windows"
@@ -19,13 +21,17 @@ for entry in source.iterdir():
 (server/"server.properties").write_text("server-name=Paradox acceptance test\nlevel-name=paradox-acceptance\nserver-port=39431\nserver-portv6=39432\nonline-mode=false\nallow-cheats=true\ngamemode=survival\ndifficulty=peaceful\nlevel-type=FLAT\nview-distance=4\ntick-distance=4\nemit-server-telemetry=false\ntransport=nethernet\n")
 (server/"endstone.toml").write_text("[settings]\n")
 for name,source in [("endstone_inventoryui",root/"src/endstone_inventoryui"),("ninjos_backpacks",ws/"endstone-backpacks/src/ninjos_backpacks"),("endstone_inventory_manager",ws/"endstone-inventory-manager/src/endstone_inventory_manager")]:
-    shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
+    if not a.wheel_dir: shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
+if a.wheel_dir:
+    for wheel in a.wheel_dir.glob("*.whl"):
+        with ZipFile(wheel) as z: z.extractall(probe)
 for name in ("bedrock_protocol","rapidnbt","pymysql","bstream"):
     source=ws/"endstone-schematic-cloud/.venv/Lib/site-packages"/name
     if not source.exists(): source=Path(sys.base_prefix)/"Lib/site-packages"/name
     shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
 shutil.copy2(root/"tests/live/probe.py",probe/"repair_probe.py")
 for name,version,entry in [("endstone_inventoryui","2.0.7","inventoryui = endstone_inventoryui:InventoryUIPlugin"),("endstone_ninjos_backpacks","1.0.91","ninjos_backpacks = ninjos_backpacks.plugin:NinjOSBackpacks"),("endstone_inventory_manager","1.0.16","inventory-manager = endstone_inventory_manager:InventoryManagerPlugin"),("endstone_repair_probe","1.0.0","repair-probe = repair_probe:Probe")]:
+    if a.wheel_dir and name != "endstone_repair_probe": continue
     dist=probe/f"{name}-{version}.dist-info";dist.mkdir()
     (dist/"METADATA").write_text(f"Metadata-Version: 2.1\nName: {name.replace('_','-')}\nVersion: {version}\n")
     (dist/"entry_points.txt").write_text("[endstone]\n"+entry+"\n")
@@ -38,7 +44,7 @@ def read():
     for line in process.stdout:
         lines.append(line)
         with (out/"server.log").open("a",encoding="utf-8") as log:log.write(line)
-threading.Thread(target=read,daemon=True).start();client=None;events=[];report={"checks":[]}
+threading.Thread(target=read,daemon=True).start();client=None;events=[];report={"checks":[],"wheel_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in a.wheel_dir.glob("*.whl")} if a.wheel_dir else {}}
 def snapshot():
     try:return json.loads((out/"snapshot.json").read_text())
     except (FileNotFoundError,json.JSONDecodeError):return {}
@@ -83,6 +89,15 @@ try:
         transfer(-7,7,45,59,0,1,snapshot()["stack_ids"]["45"])
         wait(lambda:snapshot().get("page")==0,"virtual previous page")
         assert snapshot()["cache"]["0"]["amount"]==41
+        donor = next(i for i,item in enumerate(snapshot()["player"]) if item and item["amount"] >= 3)
+        transfer(-9,12,donor,59,0,3)
+        transfer(-11,59,0,7,0,2)
+        wait(lambda:snapshot()["cache"]["0"]["amount"]==43,"cursor deposit")
+        transfer(-13,59,0,12,35,1)
+        wait(lambda:snapshot()["player"][35] is not None,"cursor remainder")
+        assert total_player()==69, snapshot()
+        assert snapshot()["player"][35]["marker"]=="preserve custom NBT"
+        report["checks"].append("cursor partial deposit preserves remainder and custom NBT")
         report["checks"].append("virtual vault merge, withdrawal, and both page buttons conserve 112 items")
         report["passed"]=True
     else:
@@ -126,7 +141,7 @@ finally:
 assert process.returncode==0, process.returncode
 with sqlite3.connect(server/"plugins/ninjos_backpacks/backpacks.db") as db:
     contents=json.loads(db.execute("SELECT contents FROM item_backpacks WHERE backpack_id=?",("block:Overworld:0:-60:0" if a.vault else "repair-fixture_gigantic",)).fetchone()[0])
-    assert contents["0"]["amount"]==(41 if a.vault else 4), contents
+    assert contents["0"]["amount"]==(43 if a.vault else 4), contents
 report["checks"].append("stop with an open backpack flushes SQLite without a crash")
 (out/"results.json").write_text(json.dumps(report,indent=2))
 print(json.dumps(report,indent=2))
