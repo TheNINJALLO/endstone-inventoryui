@@ -5,7 +5,7 @@ from bedrock_protocol.packets.packet import (
     ItemRegistryPacket,
     NetworkStackLatencyPacket,
 )
-from endstone.event import event_handler, EventPriority, PlayerQuitEvent, PacketReceiveEvent, PacketSendEvent
+from endstone.event import event_handler, EventPriority, PlayerQuitEvent, PacketReceiveEvent, PacketSendEvent, ServerCommandEvent, PlayerCommandEvent
 from endstone.inventory import ItemStack
 from endstone.plugin import Plugin
 
@@ -58,6 +58,7 @@ class EventListener:
             action_type=action.action_type,
             source=source,
             destination=destination,
+            amount=action.action_data.amount,
         )
 
     @staticmethod
@@ -276,3 +277,15 @@ class EventListener:
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent):
         close_session(event.player)
+
+    @event_handler(priority=EventPriority.MONITOR, ignore_cancelled=True)
+    def on_server_command(self, event: ServerCommandEvent):
+        command = event.command.strip().lstrip("/").split()
+        if command and command[0].lower().split(":")[-1] == "stop":
+            self._plugin.before_stop()
+
+    @event_handler(priority=EventPriority.MONITOR, ignore_cancelled=True)
+    def on_player_command(self, event: PlayerCommandEvent):
+        command = event.command.strip().lstrip("/").split()
+        if command and command[0].lower().split(":")[-1] == "stop" and event.player.is_op:
+            self._plugin.before_stop()

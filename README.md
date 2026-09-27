@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img alt="Endstone 0.11.9" src="https://img.shields.io/badge/Endstone-0.11.9-52b7a8?style=flat-square">
+  <img alt="Endstone 0.11.11 / 0.11.12" src="https://img.shields.io/badge/Endstone-0.11.12-52b7a8?style=flat-square">
   <img alt="API 0.11" src="https://img.shields.io/badge/API-0.11-63b8ff?style=flat-square">
-  <img alt="BDS 1.26.44" src="https://img.shields.io/badge/BDS-1.26.44-8b7dff?style=flat-square">
+  <img alt="BDS 1.26.51" src="https://img.shields.io/badge/BDS-1.26.51-8b7dff?style=flat-square">
   <img alt="Python >=3.10" src="https://img.shields.io/badge/Python-%3E=3.10-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white">
 </p>
 
@@ -29,7 +29,7 @@
 
 ## Overview
 
-Inventory UI plugin for Endstone servers. This release is aligned with Endstone 0.11.9 and Minecraft Bedrock Dedicated Server 1.26.44, and is distributed as a Python wheel for direct installation in an Endstone server.
+Inventory UI plugin for Endstone servers. This release is aligned with Endstone 0.11.11 / 0.11.12 and Minecraft Bedrock Dedicated Server 1.26.51, and is distributed as a Python wheel for direct installation in an Endstone server.
 
 ## What it does
 
@@ -52,23 +52,23 @@ InventoryUI is a developer API and intentionally registers no player commands. O
 
 | Component | Supported version |
 |---|---|
-| Endstone | `0.11.9` |
+| Endstone | `0.11.11 / 0.11.12` |
 | Endstone API | `0.11` |
-| Bedrock Dedicated Server | `1.26.44` |
+| Bedrock Dedicated Server | `1.26.51` |
 | Python | `>=3.10` |
-| Plugin release | `v2.0.6` |
+| Plugin release | `v2.0.7` |
 
 ## Install
 
-Download [the `v2.0.6` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.6/endstone_inventoryui-2.0.6-py3-none-any.whl).
+Download [the `v2.0.7` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.7/endstone_inventoryui-2.0.7-py3-none-any.whl).
 
 Copy the downloaded wheel into the server's `plugins/` directory, remove any older wheel for the same plugin, and restart Endstone.
 
 > [!IMPORTANT]
-> Use Endstone `0.11.9` with BDS `1.26.44`. Back up worlds and plugin data before upgrading a production server.
+> Use Endstone `0.11.11 / 0.11.12` with BDS `1.26.51`. Back up worlds and plugin data before upgrading a production server.
 
 > [!NOTE]
-> `v2.0.6` keeps the inventory layout introduced for BDS `1.26.40`; Endstone 0.11.9 confirms BDS `1.26.44` did not change the network protocol. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
+> `v2.0.7` keeps the inventory layout introduced for BDS `1.26.40`; Endstone 0.11.11 / 0.11.12 confirms BDS `1.26.51` did not change the network protocol. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
 
 ## Configuration and secrets
 
@@ -91,10 +91,10 @@ Virtual inventory plugin for Endstone
 
 Enum for menu container types:
 
-- `MenuType.CHEST` — single chest (27 slots)
-- `MenuType.DOUBLE_CHEST` — double chest (54 slots)
-- `MenuType.DISPENSER` — dispenser (9 slots)
-- `MenuType.HOPPER` — hopper (5 slots)
+- `MenuType.CHEST` â€” single chest (27 slots)
+- `MenuType.DOUBLE_CHEST` â€” double chest (54 slots)
+- `MenuType.DISPENSER` â€” dispenser (9 slots)
+- `MenuType.HOPPER` â€” hopper (5 slots)
 
 ### Menu
 
@@ -104,37 +104,37 @@ Menu(type: MenuType, name: str = "")
 
 **Properties:**
 
-- `inventory` — the `MenuInventory` instance for this menu. Implements an API similar to Endstone's `Inventory`.
-- `name` — display name shown at the top of the menu
-- `type` — the `MenuType` used to create this menu
+- `inventory` â€” the `MenuInventory` instance for this menu. Implements an API similar to Endstone's `Inventory`.
+- `name` â€” display name shown at the top of the menu
+- `type` â€” the `MenuType` used to create this menu
 
 **Methods:**
 
-- `set_name(name: str)` — set the display name
-- `set_listener(listener)` — set the click callback (see [MenuTransaction](#menutransaction))
-- `set_open_listener(listener)` — callback when a player opens the menu: `(player: Player) -> None`
-- `set_close_listener(listener)` — callback when a player closes the menu: `(player: Player) -> None`
-- `send_to(player: Player)` — display the menu to a player. If the player already has a menu open, this menu is queued and shown after the current one closes.
-- `close(player: Player) -> bool` — close this menu for a player
-- `close_all()` — close this menu for all players currently viewing it
-- `get_viewers() -> list[Player]` — list players who currently have this menu open
+- `set_name(name: str)` â€” set the display name
+- `set_listener(listener)` â€” set the click callback (see [MenuTransaction](#menutransaction))
+- `set_open_listener(listener)` â€” callback when a player opens the menu: `(player: Player) -> None`
+- `set_close_listener(listener)` â€” callback when a player closes the menu: `(player: Player) -> None`
+- `send_to(player: Player)` â€” display the menu to a player. If the player already has a menu open, this menu is queued and shown after the current one closes.
+- `close(player: Player) -> bool` â€” close this menu for a player
+- `close_all()` â€” close this menu for all players currently viewing it
+- `get_viewers() -> list[Player]` â€” list players who currently have this menu open
 
 ### MenuTransaction
 
 **Properties:**
 
-- `player` — the player who clicked
-- `slot` — virtual inventory slot index
-- `item_clicked` — item in the virtual slot before the action
-- `item_clicked_with` — item in the other slot involved (player inventory or cursor)
-- `action_type` — the underlying `ItemStackRequestActionType`
-- `source` — source slot info from the request
-- `destination` — destination slot info from the request
+- `player` â€” the player who clicked
+- `slot` â€” virtual inventory slot index
+- `item_clicked` â€” item in the virtual slot before the action
+- `item_clicked_with` â€” item in the other slot involved (player inventory or cursor)
+- `action_type` â€” the underlying `ItemStackRequestActionType`
+- `source` â€” source slot info from the request
+- `destination` â€” destination slot info from the request
 
 **Methods:**
 
-- `proceed() -> MenuTransactionResult` — allow the transaction to proceed
-- `discard() -> MenuTransactionResult` — discard transaction
+- `proceed() -> MenuTransactionResult` â€” allow the transaction to proceed
+- `discard() -> MenuTransactionResult` â€” discard transaction
 
 ## Usage
 
@@ -165,3 +165,9 @@ menu.send_to(player)
 ```
 
 See the [example plugin](./example) for a full project.
+
+## 2.0.7 repair release
+
+InventoryUI now decodes the cereal action discriminator and fixed-width stack IDs used by BDS 1.26.51. Menu opening uses ordered latency acknowledgements, double chests include pairing data, rejected batches receive responses for every request, and close/stop callbacks save while player objects are valid. Item insertion conserves stack counts and rejected drops do not spawn items.
+
+Stop the server before replacing the old wheel. Keep only one version of each plugin in `plugins/`; preserve plugin data folders. InventoryUI-dependent plugins need the InventoryUI wheel in `plugins/`, even when its Python package is already installed.

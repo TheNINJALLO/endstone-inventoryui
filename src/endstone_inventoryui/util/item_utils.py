@@ -56,7 +56,10 @@ def is_air(item_stack: ItemStack) -> bool:
 
 def clone_item(item_stack: ItemStack) -> ItemStack:
     new_item = ItemStack(item_stack.type.id, item_stack.amount, item_stack.data)
-    if item_stack.item_meta is not None:
+    tag = item_stack.nbt
+    if tag is not None:
+        new_item.nbt = tag
+    elif item_stack.item_meta is not None:
         new_item.set_item_meta(item_stack.item_meta.clone())
     return new_item
 

@@ -60,7 +60,11 @@ class ItemStackRequestAction:
         stream: ReadOnlyBinaryStream,
         request_id: int,
     ) -> "ItemStackRequestAction":
+        variant = stream.get_unsigned_varint()
         action_value = stream.get_byte()
+        expected_variant = action_value if action_value <= 8 else action_value - 2
+        if variant != expected_variant:
+            raise ValueError(f"Item stack action variant {variant} does not match type {action_value}")
         try:
             action_type = ItemStackRequestActionType(action_value)
         except ValueError as error:
@@ -81,7 +85,7 @@ class ItemStackRequestAction:
         randomly = False
 
         if action_type == ItemStackRequestActionType.Drop:
-            # The reflected 2169 Drop action includes this trailing flag.
+            # The cereal Drop action includes this trailing flag.
             randomly = stream.get_bool()
         else:
             destination = ItemStackRequestSlotInfo.read_from(stream)
@@ -92,7 +96,9 @@ class ItemStackRequestAction:
         )
 
     def write(self, stream: BinaryStream) -> None:
-        stream.write_byte(int(self.action_type))
+        value = int(self.action_type)
+        stream.write_unsigned_varint(value if value <= 8 else value - 2)
+        stream.write_byte(value)
         if self.action_type != ItemStackRequestActionType.Swap:
             stream.write_byte(self.action_data.amount)
         self.action_data.source.write(stream)

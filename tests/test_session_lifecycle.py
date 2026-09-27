@@ -17,8 +17,9 @@ def session():
     current._menu = SimpleNamespace(_close_listener=Mock(), _open_listener=Mock(),
                                     _remove_session=Mock(), type=SimpleNamespace(container_type=0))
     sessions[player.unique_id] = current
+    player_id = player.unique_id
     yield current
-    sessions.pop(player.unique_id, None)
+    sessions.pop(player_id, None)
 
 
 def test_menu_opens_after_matching_ack_without_violation_warning(session):
@@ -82,6 +83,27 @@ def test_timeout_releases_unopened_backpack(session, monkeypatch):
     session.state = Session.State.GRAPHIC_SENT
     session.last_progress = 1
     monkeypatch.setattr(module.time, "monotonic", lambda: 17)
-    InventoryUIPlugin._expire_openings(SimpleNamespace(logger=Mock()))
+    plugin = SimpleNamespace(logger=Mock())
+    plugin._close_safely = lambda s: InventoryUIPlugin._close_safely(plugin, s)
+    InventoryUIPlugin._expire_openings(plugin)
     assert session.player.unique_id not in sessions
     session.menu._close_listener.assert_called_once()
+
+
+def test_disable_never_dereferences_destroyed_player(session):
+    from endstone_inventoryui.main import InventoryUIPlugin
+    class DestroyedPlayer:
+        def __getattribute__(self, name):
+            raise AssertionError("A destroyed native player must not be used")
+    session.player = DestroyedPlayer()
+    plugin = SimpleNamespace(server=SimpleNamespace(online_players=[]))
+    InventoryUIPlugin.on_disable(plugin)
+    assert not sessions
+    session.menu._remove_session.assert_called_once_with(session)
+
+
+def test_console_stop_flushes_open_menu_before_native_teardown():
+    plugin = SimpleNamespace(before_stop=Mock())
+    listener = EventListener(plugin)
+    listener.on_server_command(SimpleNamespace(command="stop"))
+    plugin.before_stop.assert_called_once()

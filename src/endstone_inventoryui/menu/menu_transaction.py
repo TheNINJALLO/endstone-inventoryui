@@ -33,7 +33,9 @@ class MenuTransaction:
         action_type: ItemStackRequestActionType,
         source: ItemStackRequestSlotInfo,
         destination: ItemStackRequestSlotInfo,
+        amount: int = 1,
     ):
+        self.amount = amount
         self._player = player
         self._slot = slot
         self._item_clicked = item_clicked

@@ -94,6 +94,17 @@ class Session:
             pk.items.append(ItemStackWrapper(stack_id, item_stack))
         self.player.send_packet(pk.get_packet_id(), pk.serialize())
 
+    def send_cursor(self):
+        if self._closed:
+            return
+        from bedrock_protocol.packets.types import FullContainerName
+        item = self.container_manager.cursor_container.actual.get(0)
+        pk = InventoryContentPacket(124)
+        pk.container_name = FullContainerName(59)
+        stack_id = self.container_manager.tracker.assign_slot(59, 0, item)
+        pk.items.append(ItemStackWrapper(stack_id, item))
+        self.player.send_packet(pk.get_packet_id(), pk.serialize())
+
     def update_slot(self, slot: int):
         item = self.menu.inventory.get_item(slot)
         stack_id = self.container_manager.assign_virtual_slot(slot, item)

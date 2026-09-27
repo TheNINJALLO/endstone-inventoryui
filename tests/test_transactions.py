@@ -94,3 +94,20 @@ def test_rejected_button_still_responds_to_every_request_in_batch(manager):
     responses = listener._send_item_stack_responses.call_args.args[1]
     assert [r.request_id for r in responses] == [-1, -3]
     assert all(r.result == r.RESULT_ERROR for r in responses)
+
+
+def test_menu_add_item_conserves_items_and_notifies(monkeypatch):
+    import endstone_inventoryui.menu.inventory as module
+    monkeypatch.setattr(module, "clone_item", deepcopy)
+    monkeypatch.setattr(Item, "is_similar", lambda a, b: a.type.id == b.type.id, raising=False)
+    changed = []
+    inv = module.MenuInventory(size=2, slot_updated=changed.append)
+    inv.set_item(0, Item("minecraft:diamond", 60))
+    source = Item("minecraft:diamond", 4)
+    assert inv.add_item(source) == {}
+    assert inv.contents[0].amount == 64 and inv.contents[1] is None
+    assert source.amount == 4
+    changed.clear()
+    assert inv.add_item(Item("minecraft:diamond", 64)) == {}
+    assert changed == [1]
+    assert inv.add_item(Item("minecraft:diamond", 5))[0].amount == 5

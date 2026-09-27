@@ -99,6 +99,7 @@ def test_item_stack_request_reads_cereal_fixed_width_network_ids():
     stream.write_unsigned_varint(1)  # Requests
     stream.write_varint(-1)
     stream.write_unsigned_varint(1)  # Actions
+    stream.write_unsigned_varint(0)  # Cereal action variant
     stream.write_byte(int(ItemStackRequestActionType.Take))
     stream.write_byte(1)
 

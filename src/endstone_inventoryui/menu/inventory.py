@@ -58,39 +58,32 @@ class MenuInventory:
         """
         leftover = {}
         for i, item in enumerate(args):
-            if item is None or item.amount <= 0:
+            if item is None or item.amount <= 0 or item.type.id == "minecraft:air":
                 continue
-            remaining = clone_item(item)
-
-            for slot_idx in range(self._size):
-                if remaining.amount <= 0:
+            remaining = item.amount
+            for slot_idx, slot_item in enumerate(self._slots):
+                if not remaining:
                     break
-                slot_item = self._slots[slot_idx]
-                if slot_item is not None and slot_item.is_similar(remaining):
-                    max_add = min(remaining.amount,
-                                  min(self._max_stack_size, slot_item.max_stack_size) - slot_item.amount)
-                    if max_add > 0:
-                        slot_item.amount += max_add
+                if slot_item is not None and slot_item.is_similar(item):
+                    count = min(remaining, max(0, min(self._max_stack_size, slot_item.max_stack_size) - slot_item.amount))
+                    if count:
+                        slot_item.amount += count
+                        remaining -= count
                         self._notify_slot_update(slot_idx)
-                        if remaining.amount == max_add:
-                            break
-                        remaining.amount -= max_add
-
-            for slot_idx in range(self._size):
-                if remaining.amount <= 0:
+            for slot_idx, slot_item in enumerate(self._slots):
+                if not remaining:
                     break
-                if self._slots[slot_idx] is None:
-                    max_add = min(remaining.amount,
-                                  min(self._max_stack_size, remaining.max_stack_size))
-                    new_item = clone_item(remaining)
-                    new_item.amount = max_add
+                if slot_item is None or slot_item.type.id == "minecraft:air":
+                    count = min(remaining, self._max_stack_size, item.max_stack_size)
+                    new_item = clone_item(item)
+                    new_item.amount = count
                     self._slots[slot_idx] = new_item
-                    if remaining.amount == max_add:
-                        break
-                    remaining.amount -= max_add
+                    remaining -= count
                     self._notify_slot_update(slot_idx)
-            if remaining.amount > 0:
-                leftover[i] = remaining
+            if remaining:
+                rest = clone_item(item)
+                rest.amount = remaining
+                leftover[i] = rest
         return leftover
 
     def remove_item(self, *args: ItemStack) -> dict[int, ItemStack]:
