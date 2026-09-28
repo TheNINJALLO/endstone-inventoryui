@@ -171,3 +171,5 @@ See the [example plugin](./example) for a full project.
 InventoryUI now decodes the cereal action discriminator and fixed-width stack IDs used by BDS 1.26.51. Menu opening uses ordered latency acknowledgements, double chests include pairing data, rejected batches receive responses for every request, and close/stop callbacks save while player objects are valid. Item insertion conserves stack counts and rejected drops do not spawn items.
 
 Stop the server before replacing the old wheel. Keep only one version of each plugin in `plugins/`; preserve plugin data folders. InventoryUI-dependent plugins need the InventoryUI wheel in `plugins/`, even when its Python package is already installed.
+
+For backpack item interactions, use [Backpacks 1.0.92](https://github.com/TheNINJALLO/endstone-ninjos-backpacks/releases/tag/v1.0.92), which fixes the legacy shulker material mismatch. The [live test guide](tests/live/README.md) covers real item interactions as well as menu transactions. InventoryUI's runtime remains at 2.0.7.

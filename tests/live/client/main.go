@@ -49,6 +49,8 @@ type Bot struct {
 	clockFraction     float64
 	sent, corrected   uint64
 	done              chan struct{}
+	inventory         [36]protocol.ItemInstance
+	interaction       *protocol.UseItemTransactionData
 }
 
 func (b *Bot) read() {
@@ -75,19 +77,27 @@ func (b *Bot) read() {
 				_ = b.conn.WritePacket(&packet.NetworkStackLatency{Timestamp: p.Timestamp})
 			}
 		case *packet.ContainerOpen:
-            event(b.name, "container_open", p)
-        case *packet.ContainerClose:
-            event(b.name, "container_close", p)
-            if p.ServerSide {
-                _ = b.conn.WritePacket(&packet.ContainerClose{WindowID: p.WindowID, ContainerType: p.ContainerType})
-            }
-        case *packet.InventoryContent:
-            event(b.name, "inventory_content", p)
-        case *packet.InventorySlot:
-            event(b.name, "inventory_slot", p)
-        case *packet.ItemStackResponse:
-            event(b.name, "stack_response", p)
-        case *packet.Text:
+			event(b.name, "container_open", p)
+		case *packet.PacketViolationWarning:
+			event(b.name, "packet_violation", p)
+		case *packet.ContainerClose:
+			event(b.name, "container_close", p)
+			if p.ServerSide {
+				_ = b.conn.WritePacket(&packet.ContainerClose{WindowID: p.WindowID, ContainerType: p.ContainerType})
+			}
+		case *packet.InventoryContent:
+			if p.WindowID == 0 {
+				copy(b.inventory[:], p.Content)
+			}
+			event(b.name, "inventory_content", p)
+		case *packet.InventorySlot:
+			if p.WindowID == 0 && p.Slot < 36 {
+				b.inventory[p.Slot] = p.NewItem
+			}
+			event(b.name, "inventory_slot", p)
+		case *packet.ItemStackResponse:
+			event(b.name, "stack_response", p)
+		case *packet.Text:
 			event(b.name, "text", p.Message)
 		case *packet.CommandOutput:
 			event(b.name, "command_output", p.OutputMessages)
@@ -154,6 +164,11 @@ func (b *Bot) input() {
 			yaw := float64(b.yaw) * math.Pi / 180
 			camera := mgl32.Vec3{float32(-math.Sin(yaw)), 0, float32(math.Cos(yaw))}
 			p := &packet.PlayerAuthInput{Position: b.pos, Delta: delta, Yaw: b.yaw, HeadYaw: b.yaw, MoveVector: move, RawMoveVector: move, AnalogueMoveVector: move, CameraOrientation: camera, InputMode: packet.InputModeMouse, PlayMode: packet.PlayModeNormal, InteractionModel: packet.InteractionModelCrosshair, InputData: flags, Tick: b.tick}
+			if b.interaction != nil {
+				p.InputData.Set(packet.InputFlagPerformItemInteraction)
+				p.ItemInteractionData = protocol.Option(*b.interaction)
+				b.interaction = nil
+			}
 			b.clockFraction += float64(b.clockRate) / float64(b.rate)
 			advance := uint64(b.clockFraction)
 			b.tick += advance
@@ -239,15 +254,17 @@ func main() {
 	}
 	handle := func(line []byte) {
 		var cmd struct {
-			Name   string `json:"name"`
-			Action string `json:"action"`
-			Value  string `json:"value"`
-			Rate   int    `json:"rate"`
-			Slot   uint32 `json:"slot"`
-            RequestID int32 `json:"request_id"`
-            Count byte `json:"count"`
-            Source protocol.StackRequestSlotInfo `json:"source"`
-            Destination protocol.StackRequestSlotInfo `json:"destination"`
+			Name           string                        `json:"name"`
+			Action         string                        `json:"action"`
+			Value          string                        `json:"value"`
+			Rate           int                           `json:"rate"`
+			Slot           uint32                        `json:"slot"`
+			RequestID      int32                         `json:"request_id"`
+			Count          byte                          `json:"count"`
+			Source         protocol.StackRequestSlotInfo `json:"source"`
+			Destination    protocol.StackRequestSlotInfo `json:"destination"`
+			BlockPosition  protocol.BlockPos             `json:"block_position"`
+			BlockRuntimeID uint32                        `json:"block_runtime_id"`
 		}
 		if json.Unmarshal(line, &cmd) != nil {
 			return
@@ -271,15 +288,34 @@ func main() {
 			b.clockRate = cmd.Rate
 		case "command":
 			_ = b.conn.WritePacket(&packet.CommandRequest{CommandLine: cmd.Value, CommandOrigin: protocol.CommandOrigin{Origin: protocol.CommandOriginPlayer, UUID: uuid.New()}, Version: "latest"})
+		case "use_air", "use_block":
+			if cmd.Slot > 8 {
+				break
+			}
+			action := uint32(protocol.UseItemActionClickAir)
+			if cmd.Action == "use_block" {
+				action = protocol.UseItemActionClickBlock
+			}
+			b.interaction = &protocol.UseItemTransactionData{
+				ActionType: action, TriggerType: protocol.TriggerTypePlayerInput,
+				HotBarSlot: int32(cmd.Slot), HeldItem: b.inventory[cmd.Slot], Position: b.pos,
+				BlockPosition: cmd.BlockPosition, BlockRuntimeID: cmd.BlockRuntimeID,
+				BlockFace: 1, ClickedPosition: mgl32.Vec3{0.5, 1, 0.5},
+			}
 		case "transfer":
-            a := &protocol.TakeStackRequestAction{}
-            a.Count, a.Source, a.Destination = cmd.Count, cmd.Source, cmd.Destination
-            err := b.conn.WritePacket(&packet.ItemStackRequest{Requests: []protocol.ItemStackRequest{{RequestID: cmd.RequestID, Actions: []protocol.StackRequestAction{a}, FilterCause: -1}}})
-            if err != nil { event(b.name, "request_error", err.Error()) }
-        case "menu_close":
-            _ = b.conn.WritePacket(&packet.ContainerClose{WindowID: 2, ContainerType: 0})
-        case "hotbar":
-			_ = b.conn.WritePacket(&packet.PlayerHotBar{SelectedHotBarSlot: cmd.Slot, SelectHotBarSlot: true})
+			a := &protocol.TakeStackRequestAction{}
+			a.Count, a.Source, a.Destination = cmd.Count, cmd.Source, cmd.Destination
+			err := b.conn.WritePacket(&packet.ItemStackRequest{Requests: []protocol.ItemStackRequest{{RequestID: cmd.RequestID, Actions: []protocol.StackRequestAction{a}, FilterCause: -1}}})
+			if err != nil {
+				event(b.name, "request_error", err.Error())
+			}
+		case "menu_close":
+			_ = b.conn.WritePacket(&packet.ContainerClose{WindowID: 2, ContainerType: 0})
+		case "hotbar":
+			if cmd.Slot > 8 {
+				break
+			}
+			_ = b.conn.WritePacket(&packet.MobEquipment{EntityRuntimeID: b.conn.GameData().EntityRuntimeID, NewItem: b.inventory[cmd.Slot], InventorySlot: byte(cmd.Slot), HotBarSlot: byte(cmd.Slot)})
 		case "attack":
 			if target := bots[cmd.Value]; target != nil {
 				_ = b.conn.WritePacket(&packet.InventoryTransaction{TransactionData: &protocol.UseItemOnEntityTransactionData{TargetEntityRuntimeID: target.conn.GameData().EntityRuntimeID, ActionType: protocol.UseItemOnEntityActionAttack, Position: b.pos, ClickedPosition: mgl32.Vec3{0, 1, 0}}})
