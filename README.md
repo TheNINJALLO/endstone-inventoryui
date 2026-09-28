@@ -180,4 +180,4 @@ InventoryUI now decodes the cereal action discriminator and fixed-width stack ID
 
 Stop the server before replacing the old wheel. Keep only one version of each plugin in `plugins/`; preserve plugin data folders. InventoryUI-dependent plugins need the InventoryUI wheel in `plugins/`, even when its Python package is already installed.
 
-For backpack item interactions, use [Backpacks 1.0.92](https://github.com/TheNINJALLO/endstone-ninjos-backpacks/releases/tag/v1.0.92), which fixes the legacy shulker material mismatch. The [live test guide](tests/live/README.md) covers real item interactions as well as menu transactions. InventoryUI's runtime remains at 2.0.7.
+The legacy shulker material fix first shipped in Backpacks 1.0.92 and is retained in [Backpacks 1.0.93](https://github.com/TheNINJALLO/endstone-ninjos-backpacks/releases/tag/v1.0.93). Use it with InventoryUI 2.0.8. The [live test guide](tests/live/README.md) covers real item interactions as well as menu transactions.

@@ -8,6 +8,8 @@ Reproduced the reported `NetworkStackLatencyPacket` import failure on **Linux / 
 - BlockData 0.6.6's complete Linux wheel loads its native provider alongside InventoryUI without a duplicate-provider warning. No separate BlockData `.so` is installed in these tests.
 - Release CI tests clean installs and the conflicting shared packages on both Python 3.11 and 3.14, and waits for both before publishing.
 
+All three tagged releases passed GitHub Actions. The downloaded InventoryUI 2.0.8, Backpacks 1.0.93, and Inventory Manager 1.0.17 wheels also passed the full live Linux/Python 3.14 legacy-item scenario with the conflicting packages and BlockData bundle installed. Their 83 Python modules match the tested local builds by AST comparison; published hashes are recorded with the results.
+
 See [results and hashes](validation/2.0.8.json), [startup instructions](startup.md), and [reproduction guide](../tests/live/README.md). These are protocol integration tests, not retail-device visual tests. The earlier Windows-only coverage did not exercise conflicting package installations.
 
 ## Earlier 2.0.7 validation

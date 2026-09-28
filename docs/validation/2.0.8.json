@@ -109,5 +109,49 @@
     "Independent protocol client; retail device rendering and touch/controller input not verified.",
     "Initial client inventory is seeded by the probe; native inventory refresh is not verified.",
     "No production rollout or MySQL integration test."
-  ]
+  ],
+  "published_wheel_runs": [
+    {
+      "runtime": "Linux x64 / Python 3.14.7 / Endstone 0.11.12 / BDS 1.26.51.1",
+      "checks": [
+        "bundled BlockData native provider available alongside InventoryUI",
+        "assigned backpack opens through real air interaction",
+        "chest menu open acknowledged and contents decoded",
+        "deposit and withdraw conserve named items",
+        "next and previous page actions preserve contents",
+        "SQLite close and reopen preserve contents and metadata",
+        "stop with an open backpack flushes SQLite without a crash"
+      ],
+      "interaction": "air",
+      "tier": "gigantic",
+      "legacy_material": true,
+      "wheel_sha256": {
+        "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": "8e4af224a42dc7ce2d428843bde38093d63ddd0568e604d292b4ff6da1d36c4e",
+        "endstone_inventoryui-2.0.8-py3-none-any.whl": "97c94f165270a832d81d0c3d7015b2efbd12e27645c11c879d501bc69f4201bd",
+        "endstone_inventory_manager-1.0.17-py3-none-any.whl": "c8334f0e7e3381e42f81ed598a6f6e73b9718ee4b9f9b3dfd78e08e834349e94"
+      },
+      "server_exit": 0,
+      "passed": true
+    }
+  ],
+  "published_payloads": {
+    "endstone_inventoryui-2.0.8-py3-none-any.whl": {
+      "sha256": "97c94f165270a832d81d0c3d7015b2efbd12e27645c11c879d501bc69f4201bd",
+      "python_modules_matched": 65
+    },
+    "endstone_inventory_manager-1.0.17-py3-none-any.whl": {
+      "sha256": "c8334f0e7e3381e42f81ed598a6f6e73b9718ee4b9f9b3dfd78e08e834349e94",
+      "python_modules_matched": 3
+    },
+    "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": {
+      "sha256": "8e4af224a42dc7ce2d428843bde38093d63ddd0568e604d292b4ff6da1d36c4e",
+      "python_modules_matched": 15
+    }
+  },
+  "payload_comparison": "Python ASTs of all 83 modules match the locally tested wheels; line ending and trailing whitespace differences do not affect code.",
+  "release_ci": {
+    "inventoryui": "https://github.com/TheNINJALLO/endstone-inventoryui/actions/runs/36366978014",
+    "backpacks": "https://github.com/TheNINJALLO/endstone-ninjos-backpacks/actions/runs/36367075167",
+    "inventory_manager": "https://github.com/TheNINJALLO/endstone-inventory-manager/actions/runs/36367077778"
+  }
 }
