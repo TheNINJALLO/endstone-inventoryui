@@ -1,6 +1,6 @@
-from bedrock_protocol.packets import MinecraftPacketIds
-from bedrock_protocol.packets.enums import ItemStackRequestActionType
-from bedrock_protocol.packets.packet import (
+from endstone_inventoryui._protocol.packets import MinecraftPacketIds
+from endstone_inventoryui._protocol.packets.enums import ItemStackRequestActionType
+from endstone_inventoryui._protocol.packets.packet import (
     ContainerClosePacket,
     ItemRegistryPacket,
     NetworkStackLatencyPacket,

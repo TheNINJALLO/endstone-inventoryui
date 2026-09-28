@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bedrock_protocol.packets.packet import BlockActorDataPacket, ContainerOpenPacket
-from bedrock_protocol.packets.types import BlockPos
+from endstone_inventoryui._protocol.packets.packet import BlockActorDataPacket, ContainerOpenPacket
+from endstone_inventoryui._protocol.packets.types import BlockPos
 from endstone import Player
 from rapidnbt import CompoundTag
 

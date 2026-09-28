@@ -1,6 +1,6 @@
-from bedrock_protocol.packets.minecraft_packet_ids import MinecraftPacketIds
-from bedrock_protocol.packets.packet.packet_base import Packet
-from bedrock_protocol.packets.types import FullContainerName
+from endstone_inventoryui._protocol.packets.minecraft_packet_ids import MinecraftPacketIds
+from endstone_inventoryui._protocol.packets.packet.packet_base import Packet
+from endstone_inventoryui._protocol.packets.types import FullContainerName
 from bstream import BinaryStream, ReadOnlyBinaryStream
 
 from endstone_inventoryui.network.item_stack_wrapper import ItemStackWrapper

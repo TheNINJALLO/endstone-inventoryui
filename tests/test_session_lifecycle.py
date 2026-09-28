@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
-from bedrock_protocol.packets.packet import NetworkStackLatencyPacket
+from endstone_inventoryui._protocol.packets.packet import NetworkStackLatencyPacket
 
 from endstone_inventoryui.listener import EventListener
 from endstone_inventoryui.manager import Session

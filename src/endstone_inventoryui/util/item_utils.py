@@ -1,6 +1,6 @@
 from ctypes import c_int16
 
-from bedrock_protocol.packets.types import ItemData
+from endstone_inventoryui._protocol.packets.types import ItemData
 from endstone.inventory import ItemStack, ItemMeta
 from rapidnbt import CompoundTag, ListTag
 

@@ -1,8 +1,11 @@
-"""Real BDS / InventoryUI / Backpacks acceptance test in a disposable directory."""
+"""Real BDS inventory acceptance test in a disposable Windows or Linux directory."""
 from pathlib import Path
 import argparse, hashlib, json, os, shutil, sqlite3, subprocess, sys, threading, time, tomllib
 from zipfile import ZipFile
-from endstone.cli.windows import WindowsBootstrap, PopenWithDll
+if os.name == "nt":
+    from endstone.cli.windows import WindowsBootstrap as Bootstrap, PopenWithDll
+else:
+    from endstone.cli.linux import LinuxBootstrap as Bootstrap
 p=argparse.ArgumentParser()
 p.add_argument("--workspace",type=Path,required=True)
 p.add_argument("--run",required=True)
@@ -11,14 +14,20 @@ p.add_argument("--wheel-dir",type=Path)
 p.add_argument("--interaction",choices=("air","block"))
 p.add_argument("--tier",choices=("small","large","gigantic"),default="gigantic")
 p.add_argument("--legacy-material",action="store_true")
+p.add_argument("--server-fixture",type=Path)
+p.add_argument("--client-path",type=Path)
+p.add_argument("--blockdata-wheel",type=Path)
 a=p.parse_args(); ws=a.workspace.resolve(); root=ws/"endstone-inventoryui-main"; out=root/"scratch"/a.run
 out.mkdir(exist_ok=False); server=out/"server"; server.mkdir(); probe=out/"python"; probe.mkdir()
-source=ws/"endstone-paradox/scratch/servers/windows"
+source=a.server_fixture.resolve() if a.server_fixture else ws/"endstone-paradox/scratch/servers/windows"
 for entry in source.iterdir():
     if entry.name in {"worlds","plugins","logs",".sentry-native","server.properties","endstone.toml","permissions.json","allowlist.json"}:continue
     target=server/entry.name
     if entry.is_dir():
-        subprocess.run(["powershell","-NoProfile","-Command", "New-Item -ItemType Junction -Path $env:REPAIR_LINK -Target $env:REPAIR_TARGET | Out-Null"],env=dict(os.environ,REPAIR_LINK=str(target),REPAIR_TARGET=str(entry)),check=True)
+        if os.name == "nt":
+            subprocess.run(["powershell","-NoProfile","-Command", "New-Item -ItemType Junction -Path $env:REPAIR_LINK -Target $env:REPAIR_TARGET | Out-Null"],env=dict(os.environ,REPAIR_LINK=str(target),REPAIR_TARGET=str(entry)),check=True)
+        else:
+            target.symlink_to(entry,target_is_directory=True)
     else:os.link(entry,target)
 (server/"plugins").mkdir()
 (server/"server.properties").write_text("server-name=Paradox acceptance test\nlevel-name=paradox-acceptance\nserver-port=39431\nserver-portv6=39432\nonline-mode=false\nallow-cheats=true\ngamemode=survival\ndifficulty=peaceful\nlevel-type=FLAT\nview-distance=4\ntick-distance=4\nemit-server-telemetry=false\ntransport=nethernet\n")
@@ -28,7 +37,10 @@ for name,source in [("endstone_inventoryui",root/"src/endstone_inventoryui"),("n
 if a.wheel_dir:
     for wheel in a.wheel_dir.glob("*.whl"):
         with ZipFile(wheel) as z: z.extractall(probe)
+if a.blockdata_wheel:
+    with ZipFile(a.blockdata_wheel) as z: z.extractall(probe)
 for name in ("bedrock_protocol","rapidnbt","pymysql","bstream"):
+    if os.name != "nt": continue  # Use freshly installed Linux dependencies.
     source=ws/"endstone-schematic-cloud/.venv/Lib/site-packages"/name
     if not source.exists(): source=Path(sys.base_prefix)/"Lib/site-packages"/name
     shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
@@ -41,8 +53,10 @@ for name,repository,entry in [("endstone_inventoryui",root,"inventoryui = endsto
     (dist/"entry_points.txt").write_text("[endstone]\n"+entry+"\n")
 (probe/"sitecustomize.py").write_text('import os,sys\nsys.path[:]=[p for p in sys.path if "site-packages" not in p.lower() or p.lower().startswith(os.environ["REPAIR_PREFIX"].lower())]\n')
 (out/"control.json").write_text('{"id":0,"action":"wait"}')
-boot=WindowsBootstrap(str(server),True,"",False);env=boot._endstone_runtime_env.copy();env.update(PYTHONPATH=str(probe)+os.pathsep+env["PYTHONPATH"],REPAIR_PREFIX=sys.prefix,REPAIR_VAULT="1" if a.vault else "0",REPAIR_INTERACTION=a.interaction or "",REPAIR_TIER=a.tier,REPAIR_LEGACY_MATERIAL="1" if a.legacy_material else "0",INVENTORY_PROBE_OUTPUT=str(out),PYTHONNOUSERSITE="1")
-process=PopenWithDll([str(boot.executable_path)],cwd=server,env=env,dll_names=str(boot._endstone_runtime_path),creationflags=subprocess.CREATE_NO_WINDOW,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace")
+boot=Bootstrap(str(server),True,"",False);env=boot._endstone_runtime_env.copy();env.update(PYTHONPATH=str(probe)+os.pathsep+env["PYTHONPATH"],REPAIR_PREFIX=sys.prefix,REPAIR_VAULT="1" if a.vault else "0",REPAIR_INTERACTION=a.interaction or "",REPAIR_TIER=a.tier,REPAIR_LEGACY_MATERIAL="1" if a.legacy_material else "0",REPAIR_BLOCKDATA="1" if a.blockdata_wheel else "0",INVENTORY_PROBE_OUTPUT=str(out),PYTHONNOUSERSITE="1")
+process_class=PopenWithDll if os.name == "nt" else subprocess.Popen
+process_options={"dll_names":str(boot._endstone_runtime_path),"creationflags":subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+process=process_class([str(boot.executable_path)],cwd=server,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",**process_options)
 lines=[]
 def read():
     for line in process.stdout:
@@ -67,7 +81,8 @@ def transfer(request,source,slot,dest,target,count,stack=0):
     wait(lambda:any(e.get("event")=="stack_response" and any(r["RequestID"]==request for r in e["value"]["Responses"]) for e in events),f"response {request}")
 try:
     wait(lambda:any("Server started" in l for l in lines),"server startup",120)
-    client=subprocess.Popen([str(root/"scratch/client/bedrock-inventory-client.exe"),"-transport","lan","-address","127.0.0.1:39431","-names","InventoryTest","-duration","180s"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",creationflags=subprocess.CREATE_NO_WINDOW)
+    client_path=a.client_path.resolve() if a.client_path else root/"scratch/client/bedrock-inventory-client.exe"
+    client=subprocess.Popen([str(client_path),"-transport","lan","-address","127.0.0.1:39431","-names","InventoryTest","-duration","180s"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     def read_client():
         with (out/"client.log").open("w",encoding="utf-8") as log:
             for line in client.stdout:
@@ -77,6 +92,9 @@ try:
     threading.Thread(target=read_client,daemon=True).start()
     wait(lambda:"player" in snapshot(),"player join")
     wait(lambda:abs(snapshot().get("location",[0,32768,0])[1])<320,"player spawned in the world")
+    if a.blockdata_wheel:
+        assert snapshot().get("blockdata_available"), snapshot()
+        report["checks"].append("bundled BlockData native provider available alongside InventoryUI")
     (out/"control.json").write_text('{"id":1,"action":"seed"}')
     if a.interaction:
         wait(lambda:snapshot().get("id")==1,"physical backpack assigned")
@@ -160,6 +178,8 @@ with sqlite3.connect(server/"plugins/ninjos_backpacks/backpacks.db") as db:
 report["checks"].append("stop with an open backpack flushes SQLite without a crash")
 assert not any("PacketViolationWarning" in l or "[Backpack ERROR]" in l for l in lines), "Server reported a packet or interaction error"
 assert not any(e.get("event")=="packet_violation" for e in events), "Client received a packet violation warning"
+if a.blockdata_wheel:
+    assert not any("which is the name of another plugin" in l or "Ambiguous plugin name" in l for l in lines), "Duplicate BlockData provider"
 report["passed"]=True
 (out/"results.json").write_text(json.dumps(report,indent=2))
 print(json.dumps(report,indent=2))

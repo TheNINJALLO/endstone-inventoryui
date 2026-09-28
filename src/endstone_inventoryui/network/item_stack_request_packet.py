@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass, field
 
-from bedrock_protocol.packets.enums import ItemStackRequestActionType
-from bedrock_protocol.packets.minecraft_packet_ids import MinecraftPacketIds
-from bedrock_protocol.packets.packet.packet_base import Packet
-from bedrock_protocol.packets.types import FullContainerName
+from endstone_inventoryui._protocol.packets.enums import ItemStackRequestActionType
+from endstone_inventoryui._protocol.packets.minecraft_packet_ids import MinecraftPacketIds
+from endstone_inventoryui._protocol.packets.packet.packet_base import Packet
+from endstone_inventoryui._protocol.packets.types import FullContainerName
 from bstream import BinaryStream, ReadOnlyBinaryStream
 
 

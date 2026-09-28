@@ -22,3 +22,9 @@ The client waits for a real in-world spawn, selects the server-issued item with 
 Assertions cover the open acknowledgement, decoded contents, deposit/withdrawal, pagination where supported, metadata, SQLite close/reopen, and final save during shutdown. Results record wheel hashes and only mark success after shutdown verification. Packet violation warnings fail the run. The non-interaction and vault modes call the manager directly and do not cover the item handler.
 
 This is a protocol integration test. A latency acknowledgement does not prove a retail client rendered the chest screen; touch/controller input and visual presentation require a retail device test.
+
+## Linux / Python 3.14
+
+The same runner supports Linux using `--server-fixture <extracted-BDS-directory>` and `--client-path <Linux-client>`. Build the client with `go build`, run the script with the Endstone 0.11.12 / Python 3.14 interpreter, and install `rapidnbt`, `bstream`, and `PyMySQL` in that environment. It uses fresh installed Linux dependencies rather than copying Windows packages.
+
+To reproduce the conflicting shared namespace, install `bedrock-protocol-packets-ng==0.0.9` first and `bedrock-protocol-packets==0.0.7` second in the disposable environment. InventoryUI 2.0.7 fails to import; 2.0.8 loads independently. Add `--blockdata-wheel <0.6.6-cp314-linux_x86_64.whl>` to check bundle-only BlockData availability and reject duplicate-provider warnings during the inventory scenario.

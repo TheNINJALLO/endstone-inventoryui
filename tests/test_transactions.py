@@ -3,12 +3,12 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from bedrock_protocol.packets.enums import ItemStackRequestActionType as Action
+from endstone_inventoryui._protocol.packets.enums import ItemStackRequestActionType as Action
 
 from endstone_inventoryui.listener import EventListener
 from endstone_inventoryui.manager.container.container_manager import ContainerManager
 from endstone_inventoryui.network.item_stack_request_packet import ItemStackRequestSlotInfo
-from bedrock_protocol.packets.types import FullContainerName
+from endstone_inventoryui._protocol.packets.types import FullContainerName
 
 
 class Item:

@@ -4,10 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "endstone-inventoryui"
-version = "2.0.7"
+version = "2.0.8"
 dependencies = [
     "endstone>=0.11.11,<0.12",
-    "bedrock-protocol-packets-ng==0.0.9"
+    "bstream>=1.0.1,<2",
+    "rapidnbt>=1.3.1,<2"
 ]
 authors = [
     { name = "Shock95", email = "" },

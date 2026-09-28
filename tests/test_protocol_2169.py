@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from bedrock_protocol.packets.enums import ItemStackRequestActionType
-from bedrock_protocol.packets.types import FullContainerName
+from endstone_inventoryui._protocol.packets.enums import ItemStackRequestActionType
+from endstone_inventoryui._protocol.packets.types import FullContainerName
 from bstream import BinaryStream, ReadOnlyBinaryStream
 
 from endstone_inventoryui.listener import EventListener

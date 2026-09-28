@@ -1,0 +1,113 @@
+{
+  "versions": {
+    "inventoryui": "2.0.8",
+    "backpacks": "1.0.93",
+    "inventory_manager": "1.0.17",
+    "blockdata": "0.6.6"
+  },
+  "baseline": {
+    "runtime": "Linux / Python 3.14.7 / Endstone 0.11.12",
+    "installed_in_order": [
+      "bedrock-protocol-packets-ng==0.0.9",
+      "bedrock-protocol-packets==0.0.7"
+    ],
+    "inventoryui_2_0_7_error": "ImportError: cannot import name 'NetworkStackLatencyPacket' from 'bedrock_protocol.packets.packet'",
+    "inventoryui_2_0_8_import": "passed"
+  },
+  "unit_tests": {
+    "Windows Python 3.11": 51,
+    "Linux Python 3.14 with conflicting shared packages": 51
+  },
+  "local_built_wheel_runs": [
+    {
+      "runtime": "Linux x64 / Python 3.14.7 / Endstone 0.11.12 / BDS 1.26.51.1",
+      "checks": [
+        "bundled BlockData native provider available alongside InventoryUI",
+        "assigned backpack opens through real air interaction",
+        "chest menu open acknowledged and contents decoded",
+        "deposit and withdraw conserve named items",
+        "next and previous page actions preserve contents",
+        "SQLite close and reopen preserve contents and metadata",
+        "stop with an open backpack flushes SQLite without a crash"
+      ],
+      "interaction": "air",
+      "tier": "gigantic",
+      "legacy_material": true,
+      "wheel_sha256": {
+        "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": "e670508077ea2ac4ad22cee7c90fa9148f67bfe60f0ddfeb4e495f8db120602e",
+        "endstone_inventoryui-2.0.8-py3-none-any.whl": "88134fb600032ca3dcb0b889ca9f5bf6421954c3af28b9d51ad0919d6d5eb5df",
+        "endstone_inventory_manager-1.0.17-py3-none-any.whl": "04503fe6808ca0760e3d5e73b4b2d7c74fef68ac2411df556d890c44993ed0a5"
+      },
+      "server_exit": 0,
+      "passed": true
+    },
+    {
+      "runtime": "Linux x64 / Python 3.14.7 / Endstone 0.11.12 / BDS 1.26.51.1",
+      "checks": [
+        "bundled BlockData native provider available alongside InventoryUI",
+        "assigned backpack opens through real block interaction",
+        "chest menu open acknowledged and contents decoded",
+        "deposit and withdraw conserve named items",
+        "next and previous page actions preserve contents",
+        "SQLite close and reopen preserve contents and metadata",
+        "stop with an open backpack flushes SQLite without a crash"
+      ],
+      "interaction": "block",
+      "tier": "gigantic",
+      "legacy_material": true,
+      "wheel_sha256": {
+        "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": "e670508077ea2ac4ad22cee7c90fa9148f67bfe60f0ddfeb4e495f8db120602e",
+        "endstone_inventoryui-2.0.8-py3-none-any.whl": "88134fb600032ca3dcb0b889ca9f5bf6421954c3af28b9d51ad0919d6d5eb5df",
+        "endstone_inventory_manager-1.0.17-py3-none-any.whl": "04503fe6808ca0760e3d5e73b4b2d7c74fef68ac2411df556d890c44993ed0a5"
+      },
+      "server_exit": 0,
+      "passed": true
+    },
+    {
+      "runtime": "Linux x64 / Python 3.14.7 / Endstone 0.11.12 / BDS 1.26.51.1",
+      "checks": [
+        "bundled BlockData native provider available alongside InventoryUI",
+        "chest menu open acknowledged and contents decoded",
+        "cursor partial deposit preserves remainder and custom NBT",
+        "virtual vault merge, withdrawal, and both page buttons conserve 112 items",
+        "stop with an open backpack flushes SQLite without a crash"
+      ],
+      "interaction": null,
+      "tier": "gigantic",
+      "legacy_material": false,
+      "wheel_sha256": {
+        "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": "e670508077ea2ac4ad22cee7c90fa9148f67bfe60f0ddfeb4e495f8db120602e",
+        "endstone_inventoryui-2.0.8-py3-none-any.whl": "88134fb600032ca3dcb0b889ca9f5bf6421954c3af28b9d51ad0919d6d5eb5df",
+        "endstone_inventory_manager-1.0.17-py3-none-any.whl": "04503fe6808ca0760e3d5e73b4b2d7c74fef68ac2411df556d890c44993ed0a5"
+      },
+      "server_exit": 0,
+      "passed": true
+    },
+    {
+      "runtime": "Windows x64 / Python 3.11.9 / Endstone 0.11.11 / BDS 1.26.51.1",
+      "checks": [
+        "assigned backpack opens through real air interaction",
+        "chest menu open acknowledged and contents decoded",
+        "deposit and withdraw conserve named items",
+        "next and previous page actions preserve contents",
+        "SQLite close and reopen preserve contents and metadata",
+        "stop with an open backpack flushes SQLite without a crash"
+      ],
+      "interaction": "air",
+      "tier": "gigantic",
+      "legacy_material": true,
+      "wheel_sha256": {
+        "endstone_inventoryui-2.0.8-py3-none-any.whl": "88134fb600032ca3dcb0b889ca9f5bf6421954c3af28b9d51ad0919d6d5eb5df",
+        "endstone_inventory_manager-1.0.17-py3-none-any.whl": "04503fe6808ca0760e3d5e73b4b2d7c74fef68ac2411df556d890c44993ed0a5",
+        "endstone_ninjos_backpacks-1.0.93-py3-none-any.whl": "e670508077ea2ac4ad22cee7c90fa9148f67bfe60f0ddfeb4e495f8db120602e"
+      },
+      "server_exit": 0,
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "Independent protocol client; retail device rendering and touch/controller input not verified.",
+    "Initial client inventory is seeded by the probe; native inventory refresh is not verified.",
+    "No production rollout or MySQL integration test."
+  ]
+}

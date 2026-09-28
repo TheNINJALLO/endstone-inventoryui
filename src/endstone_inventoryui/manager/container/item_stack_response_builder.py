@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from bedrock_protocol.packets.types import FullContainerName
+from endstone_inventoryui._protocol.packets.types import FullContainerName
 from endstone_inventoryui.network.item_stack_response_packet import (
     ItemStackResponse,
     ItemStackResponseContainerInfo,

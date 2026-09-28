@@ -94,6 +94,9 @@ class Probe(Plugin):
                       "target_runtime_id":self.server.create_block_data("minecraft:stone").runtime_id,
                       "state":session.state.name if session else None,
                       "menu":[describe(i) for i in session.menu.inventory.contents] if session else []}
+            if os.environ.get("REPAIR_BLOCKDATA") == "1":
+                from endstone_blockdata_inspector import _endstone_blockdata_live as bridge
+                result["blockdata_available"] = bridge.available(self.server)
             if session:
                 result["stack_ids"] = {str(i):session.container_manager.tracker.get_stack_id(7,i) for i in range(54)}
             (self.root / "snapshot.json").write_text(json.dumps(result))

@@ -1,0 +1,31 @@
+# Copyright © 2025 GlacieTeam. All rights reserved.
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
+# distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+
+from endstone_inventoryui._protocol.packets.packet import *  # pylint: disable=wildcard-import
+from endstone_inventoryui._protocol.packets.minecraft_packet_ids import MinecraftPacketIds
+
+
+class MinecraftPackets:
+    _all_packets_map = {
+        MinecraftPacketIds.Login: LoginPacket, # 1
+        MinecraftPacketIds.Disconnect: DisconnectPacket, # 5
+        MinecraftPacketIds.RemoveActor: RemoveActorPacket,  # 14
+        MinecraftPacketIds.UpdateBlock: UpdateBlockPacket,  # 21
+        MinecraftPacketIds.ContainerOpen: ContainerOpenPacket,  # 46
+        MinecraftPacketIds.ContainerClose: ContainerClosePacket,  # 47
+        MinecraftPacketIds.BlockActorData: BlockActorDataPacket,  # 56
+        MinecraftPacketIds.LevelSoundEvent: LevelSoundEventPacket,  # 123
+        MinecraftPacketIds.ItemStackRequest: ItemStackRequestPacket,  # 147
+        MinecraftPacketIds.ItemRegistryPacket: ItemRegistryPacket,  # 162
+    }
+
+    @staticmethod
+    def create_packet(packet_id: MinecraftPacketIds) -> Packet:
+        packet_class = MinecraftPackets._all_packets_map.get(packet_id)
+        if packet_class is not None:
+            return packet_class()
+        return UnimplementedPacket(packet_id)

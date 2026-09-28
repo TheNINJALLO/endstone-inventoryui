@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
-from bedrock_protocol.packets.enums import ItemStackRequestActionType
-from bedrock_protocol.packets.types import ItemStackRequestSlotInfo
+from endstone_inventoryui._protocol.packets.enums import ItemStackRequestActionType
+from endstone_inventoryui._protocol.packets.types import ItemStackRequestSlotInfo
 from endstone import Player
 from endstone.inventory import ItemStack
 

@@ -1,4 +1,16 @@
-# 2.0.7 validation
+# 2.0.8 startup validation
+
+Reproduced the reported `NetworkStackLatencyPacket` import failure on **Linux / Python 3.14.7 / Endstone 0.11.12** by installing `bedrock-protocol-packets-ng==0.0.9`, then `bedrock-protocol-packets==0.0.7`. InventoryUI 2.0.7 fails before registration; 2.0.8 imports and runs with both conflicting distributions still installed.
+
+- **51 combined InventoryUI/Backpacks tests passed** on Windows/Python 3.11 and on Linux/Python 3.14. The Linux tests exercise the built wheels in the conflicting environment. Import isolation tests also block access to the shared protocol entirely.
+- On Linux / Endstone 0.11.12 / BDS 1.26.51.1, live air and block backpack interactions pass with transfers, gigantic page buttons, custom NBT, SQLite close/reopen, and shutdown saving. Virtual vault/cursor transfers pass and conserve item totals.
+- A Windows / Endstone 0.11.11 / Python 3.11 live air-interaction regression also passes.
+- BlockData 0.6.6's complete Linux wheel loads its native provider alongside InventoryUI without a duplicate-provider warning. No separate BlockData `.so` is installed in these tests.
+- Release CI tests clean installs and the conflicting shared packages on both Python 3.11 and 3.14, and waits for both before publishing.
+
+See [results and hashes](validation/2.0.8.json), [startup instructions](startup.md), and [reproduction guide](../tests/live/README.md). These are protocol integration tests, not retail-device visual tests. The earlier Windows-only coverage did not exercise conflicting package installations.
+
+## Earlier 2.0.7 validation
 
 BDS 1.26.51.1 / Endstone 0.11.11 / Windows x64 / Python 3.11, using an independently encoded Gophertunnel 1.62.0 client (protocol 2193).
 

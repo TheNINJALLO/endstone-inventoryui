@@ -1,4 +1,4 @@
-from bedrock_protocol.packets.types import ItemData
+from endstone_inventoryui._protocol.packets.types import ItemData
 from bstream import BinaryStream
 from endstone.inventory import ItemStack
 from endstone_inventoryui.util import item_utils

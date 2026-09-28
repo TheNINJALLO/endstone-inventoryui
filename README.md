@@ -56,11 +56,11 @@ InventoryUI is a developer API and intentionally registers no player commands. O
 | Endstone API | `0.11` |
 | Bedrock Dedicated Server | `1.26.51` |
 | Python | `>=3.10` |
-| Plugin release | `v2.0.7` |
+| Plugin release | `v2.0.8` |
 
 ## Install
 
-Download [the `v2.0.7` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.7/endstone_inventoryui-2.0.7-py3-none-any.whl).
+Download [the `v2.0.8` wheel over HTTPS](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.8/endstone_inventoryui-2.0.8-py3-none-any.whl).
 
 Copy the downloaded wheel into the server's `plugins/` directory, remove any older wheel for the same plugin, and restart Endstone.
 
@@ -68,7 +68,7 @@ Copy the downloaded wheel into the server's `plugins/` directory, remove any old
 > Use Endstone `0.11.11 / 0.11.12` with BDS `1.26.51`. Back up worlds and plugin data before upgrading a production server.
 
 > [!NOTE]
-> `v2.0.7` keeps the inventory layout introduced for BDS `1.26.40`; Endstone 0.11.11 / 0.11.12 confirms BDS `1.26.51` did not change the network protocol. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
+> `v2.0.8` keeps the inventory layout introduced for BDS `1.26.40`; Endstone 0.11.11 / 0.11.12 confirms BDS `1.26.51` did not change the network protocol. Earlier InventoryUI wheels can send the retired item-stack network-ID layout and disconnect a player when a virtual inventory opens.
 
 ## Configuration and secrets
 
@@ -78,6 +78,14 @@ Runtime databases, logs, local `.env` files, server directories, and root `confi
 
 Every `v*` tag runs [the wheel release workflow](.github/workflows/wheel-release.yml), builds the package in a clean GitHub runner, stores the wheel as a workflow artifact, and attaches it to the matching GitHub release.
 <!-- endstone-professional-header:end -->
+
+## 2.0.8 startup repair
+
+InventoryUI now bundles its protocol helpers in a private package. The original `bedrock-protocol-packets` and `bedrock-protocol-packets-ng` distributions share the `bedrock_protocol` namespace; installing one over the other can remove exports such as `NetworkStackLatencyPacket` and prevent InventoryUI from loading. This release works independently of either shared package and needs no startup patch from Backpacks.
+
+Use Backpacks **1.0.93** and Inventory Manager **1.0.17** when those plugins are installed, so their dependencies select InventoryUI **2.0.8**. Replace old wheels while the server is stopped and preserve plugin data. See [startup troubleshooting](docs/startup.md) and [validation](docs/validation.md).
+
+The bundled protocol source retains its MPL-2.0 license; see [third-party notice](src/endstone_inventoryui/_protocol/NOTICE.md). InventoryUI's own code remains MIT licensed.
 
 ---
 

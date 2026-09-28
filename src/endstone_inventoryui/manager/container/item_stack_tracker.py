@@ -1,4 +1,4 @@
-from bedrock_protocol.packets.types import ItemStackRequestSlotInfo
+from endstone_inventoryui._protocol.packets.types import ItemStackRequestSlotInfo
 from endstone.inventory import ItemStack
 
 from endstone_inventoryui.network.container_ui_ids import ContainerUIIds

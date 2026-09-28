@@ -3,8 +3,8 @@ from enum import Enum
 from typing import TYPE_CHECKING
 import time
 
-from bedrock_protocol.packets.packet import ContainerClosePacket
-from bedrock_protocol.packets.types import BlockPos
+from endstone_inventoryui._protocol.packets.packet import ContainerClosePacket
+from endstone_inventoryui._protocol.packets.types import BlockPos
 from endstone import Player
 
 from endstone_inventoryui.manager.container.container_manager import ContainerManager
@@ -97,7 +97,7 @@ class Session:
     def send_cursor(self):
         if self._closed:
             return
-        from bedrock_protocol.packets.types import FullContainerName
+        from endstone_inventoryui._protocol.packets.types import FullContainerName
         item = self.container_manager.cursor_container.actual.get(0)
         pk = InventoryContentPacket(124)
         pk.container_name = FullContainerName(59)
