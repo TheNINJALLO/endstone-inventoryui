@@ -140,13 +140,29 @@ class ContainerManager:
 
         self._pending_drops.append(dropped)
 
-    def commit_transaction(self) -> ItemStackResponse:
-        self.player_container.commit()
-        self.virtual_container.commit()
-        self.cursor_container.commit()
-
+    def commit_transaction(self, checkpoint=None) -> ItemStackResponse:
         if self._response_builder is None:
             raise RuntimeError("No active item stack request")
+
+        containers = (self.player_container, self.virtual_container, self.cursor_container)
+        originals = []
+        for container in containers:
+            for slot in container.changed_slots:
+                item = container.actual.get(slot)
+                originals.append((container, slot, clone_item(item) if item is not None and not is_air(item) else None))
+        try:
+            for container in containers:
+                for slot, item in container.changed_slots.items():
+                    container.actual.set(slot, item)
+            if checkpoint is not None:
+                checkpoint()
+        except Exception:
+            for container, slot, item in reversed(originals):
+                container.actual.set(slot, item)
+            self.discard_transaction()
+            raise
+        for container in containers:
+            container.discard()
 
         for container_enum, slots in self._response_builder.changed_slots().items():
             for slot in slots.values():

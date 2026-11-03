@@ -1,8 +1,8 @@
 # Inventory interaction acceptance test
 
-The Windows runner starts a disposable BDS 1.26.51.1 server with Endstone 0.11.11, InventoryUI, Backpacks, Inventory Manager, and a test probe. It requires the supplied server fixture at `endstone-paradox/scratch/servers/windows` and the Windows Endstone environment. It does not connect to a production server.
+The runner supports disposable Windows and Linux servers with InventoryUI, Backpacks, Inventory Manager, and a test probe. The 0.11.15 checks use BDS 1.26.60.6 and protocol 2225. Pass `--server-fixture` and `--client-path` for the matching inputs; `--client-transport raknet` selects a direct local connection. The earlier default fixture path remains for historical runs. It does not connect to a production server.
 
-Build the pinned Gophertunnel 1.62.0 client using Go 1.26.0 from `tests/live/client`, placing the executable at `scratch/client/bedrock-inventory-client.exe`:
+Build the pinned protocol-2225 Gophertunnel client using Go 1.26.0 from `tests/live/client`, placing the executable at `scratch/client/bedrock-inventory-client.exe`:
 
 ```powershell
 go build -o ../../../scratch/client/bedrock-inventory-client.exe .

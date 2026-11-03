@@ -1,6 +1,6 @@
 """Real BDS inventory acceptance test in a disposable Windows or Linux directory."""
 from pathlib import Path
-import argparse, hashlib, json, os, shutil, sqlite3, subprocess, sys, threading, time, tomllib
+import argparse, hashlib, importlib.util, json, os, shutil, sqlite3, subprocess, sys, threading, time, tomllib
 from zipfile import ZipFile
 if os.name == "nt":
     from endstone.cli.windows import WindowsBootstrap as Bootstrap, PopenWithDll
@@ -16,6 +16,7 @@ p.add_argument("--tier",choices=("small","large","gigantic"),default="gigantic")
 p.add_argument("--legacy-material",action="store_true")
 p.add_argument("--server-fixture",type=Path)
 p.add_argument("--client-path",type=Path)
+p.add_argument("--client-transport",choices=("lan","raknet"),default="lan")
 p.add_argument("--blockdata-wheel",type=Path)
 a=p.parse_args(); ws=a.workspace.resolve(); root=ws/"endstone-inventoryui-main"; out=root/"scratch"/a.run
 out.mkdir(exist_ok=False); server=out/"server"; server.mkdir(); probe=out/"python"; probe.mkdir()
@@ -31,6 +32,8 @@ for entry in source.iterdir():
     else:os.link(entry,target)
 (server/"plugins").mkdir()
 (server/"server.properties").write_text("server-name=Paradox acceptance test\nlevel-name=paradox-acceptance\nserver-port=39431\nserver-portv6=39432\nonline-mode=false\nallow-cheats=true\ngamemode=survival\ndifficulty=peaceful\nlevel-type=FLAT\nview-distance=4\ntick-distance=4\nemit-server-telemetry=false\ntransport=nethernet\n")
+if a.client_transport == "raknet":
+    with (server/"server.properties").open("a") as properties: properties.write("transport=raknet\n")
 (server/"endstone.toml").write_text("[settings]\n")
 for name,source in [("endstone_inventoryui",root/"src/endstone_inventoryui"),("ninjos_backpacks",ws/"endstone-backpacks/src/ninjos_backpacks"),("endstone_inventory_manager",ws/"endstone-inventory-manager/src/endstone_inventory_manager")]:
     if not a.wheel_dir: shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
@@ -41,7 +44,8 @@ if a.blockdata_wheel:
     with ZipFile(a.blockdata_wheel) as z: z.extractall(probe)
 for name in ("bedrock_protocol","rapidnbt","pymysql","bstream"):
     if os.name != "nt": continue  # Use freshly installed Linux dependencies.
-    source=ws/"endstone-schematic-cloud/.venv/Lib/site-packages"/name
+    spec=importlib.util.find_spec(name)
+    source=Path(next(iter(spec.submodule_search_locations))) if spec and spec.submodule_search_locations else ws/"endstone-schematic-cloud/.venv/Lib/site-packages"/name
     if not source.exists(): source=Path(sys.base_prefix)/"Lib/site-packages"/name
     shutil.copytree(source,probe/name,ignore=shutil.ignore_patterns("__pycache__"))
 shutil.copy2(root/"tests/live/probe.py",probe/"repair_probe.py")
@@ -65,7 +69,7 @@ def read():
 threading.Thread(target=read,daemon=True).start();client=None;events=[];report={"checks":[],"interaction":a.interaction,"tier":a.tier,"legacy_material":a.legacy_material,"wheel_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in a.wheel_dir.glob("*.whl")} if a.wheel_dir else {}}
 def snapshot():
     try:return json.loads((out/"snapshot.json").read_text())
-    except (FileNotFoundError,json.JSONDecodeError):return {}
+    except (FileNotFoundError,PermissionError,json.JSONDecodeError):return {}
 def wait(predicate,label,timeout=45):
     until=time.monotonic()+timeout
     while time.monotonic()<until:
@@ -82,7 +86,7 @@ def transfer(request,source,slot,dest,target,count,stack=0):
 try:
     wait(lambda:any("Server started" in l for l in lines),"server startup",120)
     client_path=a.client_path.resolve() if a.client_path else root/"scratch/client/bedrock-inventory-client.exe"
-    client=subprocess.Popen([str(client_path),"-transport","lan","-address","127.0.0.1:39431","-names","InventoryTest","-duration","180s"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+    client=subprocess.Popen([str(client_path),"-transport",a.client_transport,"-address","127.0.0.1:39431","-names","InventoryTest","-duration","180s"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     def read_client():
         with (out/"client.log").open("w",encoding="utf-8") as log:
             for line in client.stdout:

@@ -21,6 +21,7 @@ class Menu:
         self._listener: Optional[Callable[[MenuTransaction], MenuTransactionResult]] = None
         self._open_listener: Optional[Callable[[Player], None]] = None
         self._close_listener: Optional[Callable[[Player], None]] = None
+        self._commit_listener: Optional[Callable[[Player], None]] = None
         self._sessions: set['Session'] = set()
 
     @property
@@ -65,6 +66,14 @@ class Menu:
             listener: A function called when a player closes this menu.
         """
         self._close_listener = listener
+
+    def set_commit_listener(self, listener: Callable[[Player], None]):
+        """Checkpoint accepted inventory changes before acknowledging the request.
+
+        Raising rejects the request and restores the changed inventory slots.
+        The listener must not create drops or other irreversible side effects.
+        """
+        self._commit_listener = listener
 
     def send_to(self, player: Player):
         """

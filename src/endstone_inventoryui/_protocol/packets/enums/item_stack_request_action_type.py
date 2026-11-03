@@ -29,5 +29,6 @@ class ItemStackRequestActionType(IntEnum):
     CraftRecipeOptional = 15
     CraftGrindStone = 16
     CraftLoom = 17
-    CraftNonImplemented = 18
-    CraftResults = 19
+    CraftReserved = 18
+    CraftNonImplemented = 19
+    CraftResults = 20

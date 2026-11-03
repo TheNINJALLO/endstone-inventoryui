@@ -1,4 +1,4 @@
-"""Bedrock cereal ItemStackRequest decoder (BDS 1.26.51, protocol 2193)."""
+"""Bedrock cereal ItemStackRequest decoder (BDS 1.26.60, protocol 2225)."""
 
 from dataclasses import dataclass, field
 

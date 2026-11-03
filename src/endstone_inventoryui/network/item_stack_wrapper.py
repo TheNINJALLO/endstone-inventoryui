@@ -31,8 +31,7 @@ class ItemStackWrapper:
 
     def write_footer(self, stream: BinaryStream):
         """Builds the extra data buffer (NBT + canPlaceOn + canDestroy)"""
-        item_meta = self.item_stack.item_meta
-        tag = item_utils.build_tag(item_meta)
+        tag = item_utils.build_item_tag(self.item_stack)
         if not tag.empty():
             stream.write_signed_short(-1)  # nbt length
             stream.write_byte(1)  # nbt version?

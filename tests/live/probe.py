@@ -99,6 +99,13 @@ class Probe(Plugin):
                 result["blockdata_available"] = bridge.available(self.server)
             if session:
                 result["stack_ids"] = {str(i):session.container_manager.tracker.get_stack_id(7,i) for i in range(54)}
-            (self.root / "snapshot.json").write_text(json.dumps(result))
+            pending = self.root / "snapshot.tmp"
+            pending.write_text(json.dumps(result))
+            try:
+                pending.replace(self.root / "snapshot.json")
+            except PermissionError:
+                # Windows readers may briefly hold the previous snapshot open.
+                # Keep the previous complete record and publish again next tick.
+                pass
         except Exception:
             (self.root / "error.txt").write_text(traceback.format_exc())

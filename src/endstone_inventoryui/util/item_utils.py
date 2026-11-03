@@ -3,6 +3,8 @@ from ctypes import c_int16
 from endstone_inventoryui._protocol.packets.types import ItemData
 from endstone.inventory import ItemStack, ItemMeta
 from rapidnbt import CompoundTag, ListTag
+import rapidnbt
+from endstone import nbt as native_nbt
 
 enchant_map = {
     "protection": 0,
@@ -59,9 +61,40 @@ def clone_item(item_stack: ItemStack) -> ItemStack:
     tag = item_stack.nbt
     if tag is not None:
         new_item.nbt = tag
+        if new_item.nbt != tag:
+            raise ValueError('Native item clone changed its NBT metadata')
     elif item_stack.item_meta is not None:
         new_item.set_item_meta(item_stack.item_meta.clone())
     return new_item
+
+
+def native_tag_to_wire(tag):
+    """Convert the complete typed tree, including nested storage-item contents."""
+    if isinstance(tag, native_nbt.CompoundTag):
+        result = CompoundTag()
+        for key, value in tag.items():
+            result.set(str(key), native_tag_to_wire(value))
+        return result
+    if isinstance(tag, native_nbt.ListTag):
+        result = ListTag()
+        for child in tag:
+            result.append(native_tag_to_wire(child))
+        return result
+    for name in ('ByteTag', 'ShortTag', 'IntTag', 'LongTag', 'FloatTag', 'DoubleTag', 'StringTag'):
+        if isinstance(tag, getattr(native_nbt, name)):
+            return getattr(rapidnbt, name)(tag.value)
+    for name in ('ByteArrayTag', 'IntArrayTag'):
+        if isinstance(tag, getattr(native_nbt, name)):
+            return getattr(rapidnbt, name)(list(tag))
+    raise ValueError(f'Unsupported native NBT tag: {type(tag).__name__}')
+
+
+def build_item_tag(item_stack: ItemStack) -> CompoundTag:
+    tag = item_stack.nbt
+    if tag is not None:
+        return native_tag_to_wire(tag)
+    meta = item_stack.item_meta
+    return build_tag(meta) if meta is not None else CompoundTag()
 
 
 

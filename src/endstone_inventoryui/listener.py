@@ -149,7 +149,10 @@ class EventListener:
                         case _:
                             raise ValueError(f"Unsupported item stack request action: {action.action_type}")
 
-                responses.append(session.container_manager.commit_transaction())
+                callback = getattr(menu, '_commit_listener', None)
+                responses.append(session.container_manager.commit_transaction(
+                    (lambda: callback(player)) if callback is not None else None
+                ))
             except Exception as error:
                 self._plugin.logger.debug(f"Error handling item stack request: {error}")
                 self._reject_item_stack_request(player, session, responses, req_data.client_request_id)
@@ -274,9 +277,9 @@ class EventListener:
             for item in pk.item_registry:
                 add_item_data(item.item_name, item)
 
-    @event_handler
+    @event_handler(priority=EventPriority.LOWEST)
     def on_player_quit(self, event: PlayerQuitEvent):
-        close_session(event.player)
+        close_session(event.player, send_close=False)
 
     @event_handler(priority=EventPriority.MONITOR, ignore_cancelled=True)
     def on_server_command(self, event: ServerCommandEvent):

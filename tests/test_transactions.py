@@ -62,6 +62,31 @@ def test_deposit_and_withdraw_commit_both_sides(manager):
     assert manager.virtual_container.actual.get(4) is None
 
 
+def test_checkpoint_failure_rolls_back_player_menu_and_cursor(manager):
+    manager.player.inventory.set_item(0, Item('minecraft:diamond', 12))
+    manager.begin_request(-1)
+    manager.transfer_items(slot(12, 0), slot(7, 4), 5)
+    manager.transfer_items(slot(12, 0), slot(59, 0), 2)
+    def unavailable():
+        raise OSError('storage journal full')
+    with pytest.raises(OSError, match='storage journal full'):
+        manager.commit_transaction(unavailable)
+    assert manager.player.inventory.get_item(0).amount == 12
+    assert manager.virtual_container.actual.get(4) is None
+    assert manager.cursor_container.actual.get(0) is None
+    manager.player.dimension.drop_item.assert_not_called()
+
+
+def test_checkpoint_observes_all_changes_before_success_response(manager):
+    manager.player.inventory.set_item(0, Item('minecraft:diamond', 12))
+    manager.begin_request(-1)
+    manager.transfer_items(slot(12, 0), slot(7, 4), 5)
+    seen = []
+    manager.commit_transaction(lambda: seen.append((manager.player.inventory.get_item(0).amount,
+                                                     manager.virtual_container.actual.get(4).amount)))
+    assert seen == [(7, 5)]
+
+
 def test_rejected_request_does_not_spawn_a_drop(manager):
     manager.player.inventory.set_item(0, Item("minecraft:diamond", 12))
     manager.begin_request(-1)
