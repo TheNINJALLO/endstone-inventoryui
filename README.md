@@ -1,3 +1,7 @@
+[Download compatibility release v2.0.11](https://github.com/TheNINJALLO/endstone-inventoryui/releases/tag/v2.0.11).
+
+> Compatibility update **2.0.11** targets **Endstone 0.11.16 / BDS 1.26.65.1**, protocol **2225**, Python **3.11+**. API level remains **0.11**. Keep configuration and player data when replacing the wheel. Earlier acceptance records below describe their original builds; current qualification is tracked in the workspace upgrade report.
+
 > Item-storage safety release **2.0.10** for Endstone **0.11.15 / BDS 1.26.60.6**. Preserves full native NBT on the wire and adds synchronous storage checkpoints with inventory rollback on rejection. Install with Backpacks **1.0.94** and Inventory Manager **1.0.18**; older direct dependency URLs could reinstall InventoryUI 2.0.8.
 
 <!-- endstone-professional-header:start -->
@@ -11,9 +15,9 @@
 </p>
 
 <p align="center">
-  <img alt="Endstone 0.11.15" src="https://img.shields.io/badge/Endstone-0.11.15-52b7a8?style=flat-square">
+  <img alt="Endstone 0.11.16" src="https://img.shields.io/badge/Endstone-0.11.16-52b7a8?style=flat-square">
   <img alt="API 0.11" src="https://img.shields.io/badge/API-0.11-63b8ff?style=flat-square">
-  <img alt="BDS 1.26.60.6" src="https://img.shields.io/badge/BDS-1.26.60.6-8b7dff?style=flat-square">
+  <img alt="BDS 1.26.65.1" src="https://img.shields.io/badge/BDS-1.26.65.1-8b7dff?style=flat-square">
   <img alt="Python >=3.11" src="https://img.shields.io/badge/Python-%3E=3.11-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white">
 </p>
 
@@ -62,7 +66,7 @@ InventoryUI is a developer API and intentionally registers no player commands. O
 
 ## Install
 
-For Endstone 0.11.15 / BDS 1.26.60.6, download the [v2.0.10 wheel](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.10/endstone_inventoryui-2.0.10-py3-none-any.whl).
+For Endstone 0.11.15 / BDS 1.26.60.6, download the [v2.0.11 wheel](https://github.com/TheNINJALLO/endstone-inventoryui/releases/download/v2.0.11/endstone_inventoryui-2.0.11-py3-none-any.whl).
 
 Copy the downloaded wheel into the server's `plugins/` directory, remove any older wheel for the same plugin, and restart Endstone.
 

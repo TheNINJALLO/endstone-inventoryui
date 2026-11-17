@@ -13,4 +13,4 @@ class SharedConstants:
 
     @staticmethod
     def get_minecraft_version() -> str:
-        return "26.60"
+        return "26.65"
